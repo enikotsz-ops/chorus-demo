@@ -1,0 +1,742 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Chorus — One question. A memory. Together.</title>
+<style>
+  :root{
+    --cream:#FBF4E8;
+    --paper:#FFFDF9;
+    --ink:#2E2A26;
+    --ink-soft:#6b6155;
+    --terracotta:#D97757;
+    --terracotta-dark:#B85C3E;
+    --sage:#8FA888;
+    --sage-dark:#6F8A68;
+    --dusty:#7C93A8;
+    --gold:#E3B23C;
+    --radius:18px;
+    --shadow:0 8px 24px rgba(46,42,38,0.08);
+    --shadow-lg:0 16px 40px rgba(46,42,38,0.12);
+  }
+  *{box-sizing:border-box;}
+  body{
+    margin:0;
+    background:var(--cream);
+    color:var(--ink);
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+    line-height:1.55;
+  }
+  h1,h2,h3,.serif{
+    font-family:Georgia,"Iowan Old Style","Palatino Linotype",serif;
+    font-weight:600;
+    margin:0;
+  }
+  a{color:inherit;}
+  .wrap{max-width:960px;margin:0 auto;padding:0 24px;}
+  section{padding:88px 0;}
+  .pill{
+    display:inline-flex;align-items:center;gap:6px;
+    background:rgba(217,119,87,0.12);color:var(--terracotta-dark);
+    font-size:13px;font-weight:600;padding:5px 12px;border-radius:100px;
+    letter-spacing:.02em;
+  }
+  .btn{
+    display:inline-flex;align-items:center;gap:8px;
+    border:none;cursor:pointer;font-size:15.5px;font-weight:600;
+    padding:13px 24px;border-radius:100px;transition:transform .15s ease, box-shadow .15s ease;
+    font-family:inherit;
+  }
+  .btn:hover{transform:translateY(-1px);}
+  .btn:active{transform:translateY(0);}
+  .btn:disabled{opacity:.45;cursor:not-allowed;transform:none;}
+  .btn-primary{background:var(--terracotta);color:#fff;box-shadow:0 6px 18px rgba(217,119,87,.35);}
+  .btn-primary:hover{background:var(--terracotta-dark);}
+  .btn-outline{background:transparent;color:var(--ink);border:1.5px solid rgba(46,42,38,.2);}
+  .btn-outline:hover{border-color:var(--ink);}
+  .btn-sage{background:var(--sage);color:#fff;box-shadow:0 6px 18px rgba(143,168,136,.35);}
+  .btn-sage:hover{background:var(--sage-dark);}
+
+  /* NAV */
+  nav{
+    position:sticky;top:0;z-index:50;
+    background:rgba(251,244,232,0.85);backdrop-filter:blur(8px);
+    border-bottom:1px solid rgba(46,42,38,.08);
+  }
+  nav .wrap{display:flex;align-items:center;justify-content:space-between;padding:16px 24px;}
+  .logo{display:flex;align-items:center;gap:9px;font-family:Georgia,serif;font-size:20px;font-weight:700;}
+  .logo svg{flex-shrink:0;}
+  .navlinks{display:flex;gap:28px;font-size:14.5px;font-weight:500;color:var(--ink-soft);}
+  .navlinks a{text-decoration:none;}
+  .navlinks a:hover{color:var(--ink);}
+  @media (max-width:640px){.navlinks{display:none;}}
+
+  /* HERO */
+  .hero{padding:80px 0 60px;text-align:center;}
+  .hero h1{font-size:44px;letter-spacing:-.01em;max-width:720px;margin:22px auto 18px;}
+  .hero p.sub{font-size:19px;color:var(--ink-soft);max-width:560px;margin:0 auto 34px;}
+  .hero-actions{display:flex;gap:14px;justify-content:center;flex-wrap:wrap;}
+  .wave-deco{display:flex;gap:4px;align-items:flex-end;justify-content:center;height:44px;margin:8px 0 0;}
+  .wave-deco span{width:4px;border-radius:3px;background:var(--terracotta);opacity:.55;animation:pulse 1.8s ease-in-out infinite;}
+  .wave-deco span:nth-child(2n){background:var(--sage);}
+  .wave-deco span:nth-child(3n){background:var(--dusty);}
+  @keyframes pulse{0%,100%{transform:scaleY(.4);}50%{transform:scaleY(1);}}
+
+  /* WHY */
+  .why-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:20px;margin-top:36px;}
+  @media (max-width:760px){.why-grid{grid-template-columns:1fr;}}
+  .card{background:var(--paper);border-radius:var(--radius);padding:26px;box-shadow:var(--shadow);}
+  .stat-num{font-family:Georgia,serif;font-size:34px;color:var(--terracotta-dark);margin-bottom:4px;}
+  .stat-label{font-size:14.5px;color:var(--ink-soft);}
+  .quote-card{font-style:italic;font-size:17px;color:var(--ink);}
+
+  /* HOW */
+  .how-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:24px;margin-top:36px;}
+  @media (max-width:760px){.how-grid{grid-template-columns:1fr;}}
+  .how-step{text-align:center;padding:8px;}
+  .how-icon{
+    width:56px;height:56px;border-radius:50%;background:var(--sage);
+    display:flex;align-items:center;justify-content:center;margin:0 auto 16px;color:#fff;
+  }
+  .how-step h3{font-size:19px;margin-bottom:8px;}
+  .how-step p{font-size:15px;color:var(--ink-soft);margin:0;}
+
+  /* DEMO */
+  #demo{background:var(--paper);border-radius:28px;box-shadow:var(--shadow-lg);}
+  .demo-card{padding:36px;}
+  .demo-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:22px;flex-wrap:wrap;gap:10px;}
+  .shuffle-btn{
+    background:transparent;border:1.5px solid rgba(46,42,38,.15);color:var(--ink-soft);
+    border-radius:100px;padding:8px 16px;font-size:13.5px;font-weight:600;cursor:pointer;
+    display:flex;align-items:center;gap:6px;
+  }
+  .shuffle-btn:hover{border-color:var(--ink);color:var(--ink);}
+  .question-text{font-size:26px;line-height:1.35;margin:8px 0 28px;}
+
+  .members-row{display:flex;gap:16px;margin-bottom:28px;flex-wrap:wrap;}
+  .member{display:flex;align-items:center;gap:10px;background:var(--cream);padding:8px 14px 8px 8px;border-radius:100px;}
+  .avatar{
+    width:36px;height:36px;border-radius:50%;display:flex;align-items:center;justify-content:center;
+    color:#fff;font-weight:700;font-size:14px;flex-shrink:0;
+  }
+  .member-name{font-size:13.5px;font-weight:600;}
+  .member-status{font-size:11.5px;color:var(--ink-soft);}
+  .lock-icon{opacity:.55;margin-left:2px;}
+
+  .answer-zone{background:var(--cream);border-radius:16px;padding:26px;margin-bottom:8px;}
+  .rec-row{display:flex;align-items:center;gap:16px;flex-wrap:wrap;}
+  .mic-btn{
+    width:64px;height:64px;border-radius:50%;border:none;background:var(--terracotta);color:#fff;
+    display:flex;align-items:center;justify-content:center;cursor:pointer;box-shadow:0 8px 20px rgba(217,119,87,.4);
+    flex-shrink:0;transition:transform .15s;
+  }
+  .mic-btn:hover{transform:scale(1.05);}
+  .mic-btn.recording{background:#c0392b;animation:recPulse 1.2s ease-in-out infinite;}
+  @keyframes recPulse{0%,100%{box-shadow:0 0 0 0 rgba(192,57,43,.5);}50%{box-shadow:0 0 0 14px rgba(192,57,43,0);}}
+  #liveWave{flex:1;min-width:160px;height:56px;background:var(--paper);border-radius:10px;}
+  .rec-hint{font-size:13.5px;color:var(--ink-soft);}
+
+  textarea#typedAnswer{
+    width:100%;border:1.5px solid rgba(46,42,38,.15);border-radius:12px;padding:14px 16px;
+    font-family:inherit;font-size:15.5px;resize:vertical;min-height:90px;background:var(--paper);
+  }
+  textarea#typedAnswer:focus{outline:none;border-color:var(--terracotta);}
+
+  .submit-row{display:flex;justify-content:flex-end;margin-top:18px;gap:10px;}
+
+  .unlock-loading{display:none;text-align:center;padding:30px 0;color:var(--ink-soft);font-size:15px;}
+  .unlock-loading .wave-deco{margin-bottom:14px;}
+
+  .reveal{display:none;margin-top:8px;}
+  .answers-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-top:8px;}
+  @media (max-width:640px){.answers-grid{grid-template-columns:1fr;}}
+  .answer-card{background:var(--cream);border-radius:16px;padding:18px;}
+  .answer-card-head{display:flex;align-items:center;gap:10px;margin-bottom:10px;}
+  .answer-text{font-size:14.5px;color:var(--ink);margin:10px 0;min-height:20px;}
+  .answer-controls{display:flex;align-items:center;gap:10px;}
+  .play-btn{
+    width:38px;height:38px;border-radius:50%;border:none;background:var(--ink);color:#fff;
+    display:flex;align-items:center;justify-content:center;cursor:pointer;flex-shrink:0;
+  }
+  .play-btn:hover{background:var(--terracotta-dark);}
+  .mini-wave{display:flex;gap:2px;align-items:center;height:22px;flex:1;}
+  .mini-wave span{width:3px;border-radius:2px;background:var(--dusty);height:6px;transition:height .12s;}
+  .card-footer{display:flex;justify-content:space-between;align-items:center;margin-top:12px;}
+  .reactions{display:flex;gap:4px;}
+  .react-btn{
+    background:transparent;border:none;cursor:pointer;font-size:16px;padding:4px 6px;border-radius:8px;
+    display:flex;align-items:center;gap:3px;font-size:13px;color:var(--ink-soft);
+  }
+  .react-btn:hover{background:rgba(46,42,38,.06);}
+  .star-btn{background:transparent;border:none;cursor:pointer;font-size:18px;opacity:.4;transition:opacity .15s,transform .15s;}
+  .star-btn:hover{opacity:.8;}
+  .star-btn.starred{opacity:1;transform:scale(1.15);}
+
+  /* ARCHIVE */
+  .archive-list{display:flex;flex-direction:column;gap:12px;margin-top:28px;}
+  .archive-item{
+    background:var(--paper);border-radius:14px;padding:16px 20px;box-shadow:var(--shadow);
+    display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;
+  }
+  .archive-item .who{font-weight:700;font-size:14.5px;}
+  .archive-item .q{font-size:13.5px;color:var(--ink-soft);margin-top:2px;}
+  .archive-empty{
+    text-align:center;padding:38px 20px;color:var(--ink-soft);font-size:15px;
+    border:1.5px dashed rgba(46,42,38,.2);border-radius:16px;margin-top:28px;
+  }
+
+  /* WAITLIST */
+  .waitlist-card{background:var(--ink);color:var(--cream);border-radius:28px;padding:56px 40px;text-align:center;}
+  .waitlist-card h2{color:#fff;font-size:30px;margin-bottom:12px;}
+  .waitlist-card p{color:rgba(251,244,232,.75);max-width:460px;margin:0 auto 26px;}
+  .waitlist-form{display:flex;gap:10px;justify-content:center;flex-wrap:wrap;max-width:440px;margin:0 auto;}
+  .waitlist-form input{
+    flex:1;min-width:220px;padding:13px 18px;border-radius:100px;border:none;font-size:15px;font-family:inherit;
+  }
+  .waitlist-form input:focus{outline:2px solid var(--terracotta);}
+  .waitlist-success{display:none;color:var(--sage);font-weight:600;margin-top:16px;}
+  .waitlist-note{font-size:12.5px;color:rgba(251,244,232,.5);margin-top:18px;}
+
+  footer{padding:50px 0 70px;text-align:center;}
+  footer .tag{font-family:Georgia,serif;font-style:italic;font-size:18px;color:var(--ink-soft);margin-bottom:14px;}
+  footer .fine{font-size:12.5px;color:var(--ink-soft);opacity:.75;max-width:520px;margin:0 auto;}
+
+  .section-head{text-align:center;max-width:560px;margin:0 auto;}
+  .section-head h2{font-size:32px;margin-bottom:12px;}
+  .section-head p{color:var(--ink-soft);font-size:16px;margin:0;}
+</style>
+</head>
+<body>
+
+<nav>
+  <div class="wrap">
+    <div class="logo">
+      <svg width="26" height="26" viewBox="0 0 26 26"><g fill="none" stroke="#D97757" stroke-width="2.4" stroke-linecap="round"><line x1="4" y1="9" x2="4" y2="17"/><line x1="9" y1="5" x2="9" y2="21"/><line x1="14" y1="10" x2="14" y2="16"/><line x1="19" y1="3" x2="19" y2="23"/><line x1="23" y1="8" x2="23" y2="18"/></g></svg>
+      Chorus
+    </div>
+    <div class="navlinks">
+      <a href="#how">How it works</a>
+      <a href="#demo">Try it</a>
+      <a href="#waitlist">Waitlist</a>
+    </div>
+  </div>
+</nav>
+
+<header class="hero wrap">
+  <span class="pill">A weekly family ritual</span>
+  <h1>One question.<br>A memory.<br>Together.</h1>
+  <p class="sub">Chorus asks your family shared memories every week. Everyone answers in their own voice - and nobody hears anyone else's answer until they've given theirs.</p>
+  <div class="hero-actions">
+    <button class="btn btn-primary" onclick="scrollToId('demo')">Try the ritual ↓</button>
+    <button class="btn btn-outline" onclick="scrollToId('waitlist')">Join the waitlist</button>
+  </div>
+  <div class="wave-deco" id="heroWave"></div>
+</header>
+
+<section id="why">
+  <div class="wrap">
+    <div class="section-head">
+      <h2>Group chats go quiet.</h2>
+      <p>Video calls cover logistics. Nobody knows what to ask — so the deeper conversations never happen, and the window to capture a parent's voice and stories closes quietly.</p>
+    </div>
+    <div class="why-grid">
+      <div class="card">
+        <div class="stat-num">1 in 5</div>
+        <div class="stat-label">US adults report feeling lonely every day</div>
+      </div>
+      <div class="card">
+        <div class="stat-num">304M</div>
+        <div class="stat-label">people live outside the country they were born in — families split across time zones</div>
+      </div>
+      <div class="card quote-card">
+        “Most of us are one generation away from losing stories we can never get back.”
+      </div>
+    </div>
+  </div>
+</section>
+
+<section id="how">
+  <div class="wrap">
+    <div class="section-head">
+      <h2>How the ritual works</h2>
+      <p>No feed. No scroll. No algorithm. Just a question, an answer, and a moment you share.</p>
+    </div>
+    <div class="how-grid">
+      <div class="how-step">
+        <div class="how-icon">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 9a3 3 0 1 1 4 2.8c-.7.3-1.5 1-1.5 2.2"/><line x1="12" y1="17" x2="12" y2="17.5"/></svg>
+        </div>
+        <h3>Ask</h3>
+        <p>Every member of the group gets the same question, from a curated theme bank.</p>
+      </div>
+      <div class="how-step">
+        <div class="how-icon">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5 11a7 7 0 0 0 14 0"/><line x1="12" y1="18" x2="12" y2="21"/></svg>
+        </div>
+        <h3>Answer</h3>
+        <p>You each record a voice answer, up to three minutes. Nobody can hear yours — or anyone else's — yet.</p>
+      </div>
+      <div class="how-step">
+        <div class="how-icon">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="11" width="14" height="9" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0"/></svg>
+        </div>
+        <h3>Unlock</h3>
+        <p>Once everyone's answered, the round unlocks and the whole group listens together.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section id="demo">
+  <div class="wrap">
+    <div class="section-head">
+      <h2>Try this week's question</h2>
+      <p>This is a real demo of the ritual mechanic — your family (Mum, Dad, and Leo) are already waiting on you.</p>
+    </div>
+    <br>
+    <div id="demoCard" class="card">
+      <div class="demo-card">
+        <div class="demo-head">
+          <span class="pill" id="themePill">Childhood</span>
+          <button class="shuffle-btn" onclick="newRound()">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="17 1 21 5 17 9"/><path d="M3 11V9a4 4 0 0 1 4-4h14"/><polyline points="7 23 3 19 7 15"/><path d="M21 13v2a4 4 0 0 1-4 4H3"/></svg>
+            New question
+          </button>
+        </div>
+        <h3 class="question-text" id="questionText">Loading…</h3>
+
+        <div class="members-row" id="membersRow"></div>
+
+        <div class="answer-zone" id="answerZone">
+          <div class="rec-row">
+            <button class="mic-btn" id="micBtn" onclick="toggleRecording()" title="Record your answer">
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="2" width="6" height="12" rx="3"/><path d="M5 10a7 7 0 0 0 14 0"/><line x1="12" y1="17" x2="12" y2="21"/></svg>
+            </button>
+            <canvas id="liveWave" width="400" height="56"></canvas>
+          </div>
+          <p class="rec-hint" id="recHint">Tap the mic to record your answer (max 30s for this demo).</p>
+          <textarea id="typedAnswer" placeholder="Mic not available? Type your answer instead…" style="display:none;"></textarea>
+        </div>
+
+        <div class="submit-row">
+          <button class="btn btn-primary" id="submitBtn" onclick="submitAnswer()" disabled>Submit & unlock the round</button>
+        </div>
+
+        <div class="unlock-loading" id="unlockLoading">
+          <div class="wave-deco" id="loadingWave"></div>
+          <div>Unlocking the round…</div>
+        </div>
+
+        <div class="reveal" id="reveal">
+          <div class="answers-grid" id="answersGrid"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section id="archive">
+  <div class="wrap">
+    <div class="section-head">
+      <h2>Your archive</h2>
+      <p>Star an answer during the demo and it's kept here — a small taste of Chorus's memory layer.</p>
+    </div>
+    <div id="archiveEmpty" class="archive-empty">Nothing saved yet — star an answer above to start your archive.</div>
+    <div class="archive-list" id="archiveList"></div>
+  </div>
+</section>
+
+<section id="waitlist">
+  <div class="wrap">
+    <div class="waitlist-card">
+      <h2>The weekly ritual that keeps your family close</h2>
+      <p>— and keeps their voices forever. Leave your email and we'll let you know when Chorus is ready for your family.</p>
+      <form class="waitlist-form" onsubmit="joinWaitlist(event)">
+        <input type="email" id="waitlistEmail" placeholder="you@example.com" required>
+        <button class="btn btn-sage" type="submit">Join the waitlist</button>
+      </form>
+      <div class="waitlist-success" id="waitlistSuccess">Thanks — we'll be in touch. 💛</div>
+      <div class="waitlist-note">This is a concept demo — no email is actually sent anywhere.</div>
+    </div>
+  </div>
+</section>
+
+<footer>
+  <div class="wrap">
+    <div class="tag">The wedge is the ritual. The moat is the data. The prize is the legacy layer.</div>
+    <div class="fine">Chorus is a concept prototype. Everything in this demo — your recording, your typed answers, your archive — lives only in your browser and disappears when you close the tab. Nothing is uploaded or sold, ever.</div>
+  </div>
+</footer>
+
+<script>
+/* ---------- data ---------- */
+const MEMBERS = [
+  {id:'mum', name:'Mum', color:'#D97757', pitch:1.12, rate:0.95},
+  {id:'dad', name:'Dad', color:'#7C93A8', pitch:0.82, rate:0.92},
+  {id:'leo', name:'Leo', color:'#8FA888', pitch:1.25, rate:1.05},
+];
+
+const QUESTIONS = [
+  {theme:'Childhood', text:"What's a smell that instantly takes you back to being a kid?",
+    answers:{mum:"Bread proving on top of the radiator on Sunday mornings. I still can't walk past a bakery without thinking of that kitchen.",
+             dad:"Cut grass and two-stroke engine oil, from my father's lawnmower. He let me push it once I was tall enough to see over the handles.",
+             leo:"Chlorine. Tuesday swimming lessons, then chips in the car with the windows all steamed up."}},
+  {theme:'Values', text:"What's the hardest decision you ever made — and would you make it again?",
+    answers:{mum:"Leaving my first job to move for your father's work. I cried in the car park. I'd do it again in a heartbeat, but I still think about the version of me who didn't.",
+             dad:"Turning down a promotion so I could coach your football team instead. Nobody remembers the job title. Everyone remembers Saturday mornings.",
+             leo:"Telling Mum I didn't want to study medicine. Terrifying at the time. Honestly the best conversation we ever had."}},
+  {theme:'Family history', text:"Who in our family history do you wish you'd asked more questions?",
+    answers:{mum:"My grandmother. She survived things I only half know about, and I was too young to think to ask before she was gone.",
+             dad:"My uncle Sandor. He had a whole life before he came here that none of us ever wrote down.",
+             leo:"Honestly? You two. While I still can."}},
+  {theme:'Hopes', text:"What's something you hope never changes about our family?",
+    answers:{mum:"That we still argue about the radio in the car. Small, stupid, ours.",
+             dad:"Sunday phone calls, even on the weeks there's nothing to say.",
+             leo:"That home still smells the same when I visit. Don't ask me to explain that one."}},
+  {theme:'Values', text:"What's a piece of advice you got that you didn't understand until years later?",
+    answers:{mum:"'You won't remember the tidy house, you'll remember who was in it.' Took me two decades and a very messy kitchen to get that.",
+             dad:"'Marry someone who makes the boring days good.' I thought that meant exciting. It means kind.",
+             leo:"'Nobody's watching as closely as you think they are.' Still working on believing that one."}},
+  {theme:'Values', text:"What's a moment you felt truly proud of this family?",
+    answers:{mum:"The day we all just showed up — no arguments, just showed up. That's rarer than people think.",
+             dad:"Watching you figure out something hard without me having to say a word. That's the whole job, really.",
+             leo:"Every time we're loud in public and nobody apologises for it."}},
+];
+
+let currentQ = null, lastIndex = -1;
+let mediaRecorder=null, audioChunks=[], audioBlob=null, audioURL=null;
+let recording=false, recSeconds=0, recTimer=null, waveTimer=null;
+let audioCtx=null, analyser=null, dataArray=null, streamRef=null;
+let submitted=false, unlocked=false, typedMode=false;
+let voicesCache=[];
+
+/* ---------- utility ---------- */
+function scrollToId(id){document.getElementById(id).scrollIntoView({behavior:'smooth'});}
+
+function makeWaveBars(container, count){
+  container.innerHTML='';
+  const bars=[];
+  for(let i=0;i<count;i++){
+    const s=document.createElement('span');
+    const h=4+Math.random()*10;
+    s.style.height=h+'px';
+    container.appendChild(s);
+    bars.push(s);
+  }
+  return bars;
+}
+document.querySelectorAll('.wave-deco').forEach(el=>makeWaveBars(el, 22));
+
+function initials(name){return name.charAt(0);}
+
+/* ---------- question / members render ---------- */
+function pickQuestion(){
+  let i;
+  do{ i = Math.floor(Math.random()*QUESTIONS.length); }while(i===lastIndex && QUESTIONS.length>1);
+  lastIndex=i;
+  return QUESTIONS[i];
+}
+
+function renderMembers(){
+  const row=document.getElementById('membersRow');
+  row.innerHTML='';
+  MEMBERS.forEach(m=>{
+    const el=document.createElement('div');
+    el.className='member';
+    el.innerHTML=`
+      <div class="avatar" style="background:${m.color}">${initials(m.name)}</div>
+      <div>
+        <div class="member-name">${m.name}</div>
+        <div class="member-status">Waiting on you <span class="lock-icon">🔒</span></div>
+      </div>`;
+    row.appendChild(el);
+  });
+}
+
+function newRound(){
+  currentQ = pickQuestion();
+  document.getElementById('themePill').textContent = currentQ.theme;
+  document.getElementById('questionText').textContent = currentQ.text;
+  renderMembers();
+  resetAnswerState();
+}
+
+function resetAnswerState(){
+  submitted=false; unlocked=false;
+  audioBlob=null; audioURL=null; typedMode=false;
+  document.getElementById('answerZone').style.display='block';
+  document.getElementById('submitBtn').style.display='inline-flex';
+  document.getElementById('submitBtn').disabled=true;
+  document.getElementById('submitBtn').textContent='Submit & unlock the round';
+  document.getElementById('unlockLoading').style.display='none';
+  document.getElementById('reveal').style.display='none';
+  document.getElementById('typedAnswer').style.display='none';
+  document.getElementById('typedAnswer').value='';
+  document.getElementById('recHint').textContent='Tap the mic to record your answer (max 30s for this demo).';
+  const micBtn=document.getElementById('micBtn');
+  micBtn.style.opacity='';
+  micBtn.style.cursor='';
+  const canvas=document.getElementById('liveWave');
+  const ctx=canvas.getContext('2d');
+  ctx.clearRect(0,0,canvas.width,canvas.height);
+}
+
+/* ---------- recording ---------- */
+async function toggleRecording(){
+  if(recording){ stopRecording(); return; }
+  if(audioBlob){ // re-record
+    audioBlob=null; audioURL=null;
+  }
+  try{
+    const stream = await navigator.mediaDevices.getUserMedia({audio:true});
+    streamRef = stream;
+    startRecording(stream);
+  }catch(err){
+    enableTypedFallback();
+  }
+}
+
+function startRecording(stream){
+  audioChunks=[];
+  try{
+    mediaRecorder = new MediaRecorder(stream);
+  }catch(e){
+    enableTypedFallback(); return;
+  }
+  mediaRecorder.ondataavailable = e=>{ if(e.data.size>0) audioChunks.push(e.data); };
+  mediaRecorder.onstop = ()=>{
+    audioBlob = new Blob(audioChunks, {type:'audio/webm'});
+    audioURL = URL.createObjectURL(audioBlob);
+    document.getElementById('submitBtn').disabled=false;
+    document.getElementById('recHint').textContent='Recorded! Tap the mic again to re-record, or submit below.';
+  };
+  mediaRecorder.start();
+  recording=true;
+  recSeconds=0;
+  document.getElementById('micBtn').classList.add('recording');
+  document.getElementById('recHint').textContent='Recording… tap again to stop.';
+
+  // live waveform via WebAudio analyser
+  try{
+    audioCtx = new (window.AudioContext||window.webkitAudioContext)();
+    const src = audioCtx.createMediaStreamSource(stream);
+    analyser = audioCtx.createAnalyser();
+    analyser.fftSize=64;
+    dataArray = new Uint8Array(analyser.frequencyBinCount);
+    src.connect(analyser);
+    drawLiveWave();
+  }catch(e){/* ignore, still records fine */}
+
+  recTimer = setInterval(()=>{
+    recSeconds++;
+    if(recSeconds>=30) stopRecording();
+  },1000);
+}
+
+function drawLiveWave(){
+  const canvas=document.getElementById('liveWave');
+  const ctx=canvas.getContext('2d');
+  function draw(){
+    if(!recording) return;
+    waveTimer = requestAnimationFrame(draw);
+    analyser.getByteFrequencyData(dataArray);
+    ctx.clearRect(0,0,canvas.width,canvas.height);
+    const barW = canvas.width/dataArray.length;
+    for(let i=0;i<dataArray.length;i++){
+      const v = dataArray[i]/255;
+      const h = Math.max(3, v*canvas.height);
+      ctx.fillStyle = i%3===0 ? '#D97757' : (i%3===1 ? '#8FA888' : '#7C93A8');
+      ctx.fillRect(i*barW, canvas.height-h, barW-2, h);
+    }
+  }
+  draw();
+}
+
+function stopRecording(){
+  recording=false;
+  clearInterval(recTimer);
+  cancelAnimationFrame(waveTimer);
+  document.getElementById('micBtn').classList.remove('recording');
+  if(mediaRecorder && mediaRecorder.state!=='inactive') mediaRecorder.stop();
+  if(streamRef) streamRef.getTracks().forEach(t=>t.stop());
+  if(audioCtx) audioCtx.close().catch(()=>{});
+}
+
+function enableTypedFallback(){
+  typedMode=true;
+  document.getElementById('recHint').textContent='Microphone unavailable in this browser — type your answer instead. (In the real app, everyone records their real voice.)';
+  document.getElementById('typedAnswer').style.display='block';
+  document.getElementById('micBtn').style.opacity='.35';
+  document.getElementById('micBtn').style.cursor='not-allowed';
+  document.getElementById('typedAnswer').oninput = ()=>{
+    document.getElementById('submitBtn').disabled = document.getElementById('typedAnswer').value.trim().length===0;
+  };
+}
+
+/* ---------- submit / unlock ---------- */
+function submitAnswer(){
+  if(submitted) return;
+  submitted=true;
+  document.getElementById('answerZone').style.display='none';
+  document.getElementById('submitBtn').style.display='none';
+  document.getElementById('unlockLoading').style.display='block';
+  makeWaveBars(document.getElementById('loadingWave'), 22);
+  animateLoadingWave();
+  setTimeout(()=>{
+    document.getElementById('unlockLoading').style.display='none';
+    unlockRound();
+  }, 1700);
+}
+
+function animateLoadingWave(){
+  const bars = document.querySelectorAll('#loadingWave span');
+  let n=0;
+  const iv=setInterval(()=>{
+    if(document.getElementById('unlockLoading').style.display==='none'){clearInterval(iv);return;}
+    bars.forEach(b=>{ b.style.height=(4+Math.random()*22)+'px'; });
+    n++;
+    if(n>40) clearInterval(iv);
+  },80);
+}
+
+function unlockRound(){
+  unlocked=true;
+  const grid = document.getElementById('answersGrid');
+  grid.innerHTML='';
+
+  // "You" card first
+  grid.appendChild(buildAnswerCard({
+    id:'you', name:'You', color:'#E3B23C',
+    text: typedMode ? document.getElementById('typedAnswer').value.trim() : '(your recorded voice answer)',
+    playMode: typedMode ? 'tts' : 'audio',
+    audioURL: audioURL
+  }));
+
+  MEMBERS.forEach(m=>{
+    grid.appendChild(buildAnswerCard({
+      id:m.id, name:m.name, color:m.color,
+      text: currentQ.answers[m.id],
+      playMode:'tts', pitch:m.pitch, rate:m.rate
+    }));
+  });
+
+  document.getElementById('reveal').style.display='block';
+  document.getElementById('reveal').scrollIntoView({behavior:'smooth', block:'nearest'});
+}
+
+function buildAnswerCard(person){
+  const card=document.createElement('div');
+  card.className='answer-card';
+  const barCount=18;
+  card.innerHTML=`
+    <div class="answer-card-head">
+      <div class="avatar" style="background:${person.color}">${initials(person.name)}</div>
+      <div style="font-weight:700;font-size:14.5px;">${person.name}</div>
+    </div>
+    <div class="answer-text">${person.playMode==='audio' && !typedMode ? '<em>Voice answer — press play to listen</em>' : (person.text||'')}</div>
+    <div class="answer-controls">
+      <button class="play-btn" data-id="${person.id}">▶</button>
+      <div class="mini-wave" id="wave-${person.id}"></div>
+    </div>
+    <div class="card-footer">
+      <div class="reactions">
+        <button class="react-btn" onclick="react(this)">💛 <span>0</span></button>
+        <button class="react-btn" onclick="react(this)">😂 <span>0</span></button>
+        <button class="react-btn" onclick="react(this)">😭 <span>0</span></button>
+        <button class="react-btn" onclick="react(this)">👏 <span>0</span></button>
+      </div>
+      <button class="star-btn" onclick="toggleStar(this,'${person.id}','${person.name}')" title="Save to your archive">☆</button>
+    </div>
+  `;
+  const waveEl = card.querySelector(`#wave-${person.id}`);
+  makeWaveBars(waveEl, barCount);
+  const playBtn = card.querySelector('.play-btn');
+  playBtn.onclick = ()=>playAnswer(person, waveEl, playBtn);
+  return card;
+}
+
+function react(btn){
+  const span=btn.querySelector('span');
+  span.textContent = parseInt(span.textContent)+1;
+  btn.style.background='rgba(217,119,87,.15)';
+}
+
+function toggleStar(btn, id, name){
+  const starred = btn.classList.toggle('starred');
+  btn.textContent = starred ? '★' : '☆';
+  if(starred){
+    addToArchive(id,name);
+  }
+}
+
+function addToArchive(id,name){
+  document.getElementById('archiveEmpty').style.display='none';
+  const list=document.getElementById('archiveList');
+  const item=document.createElement('div');
+  item.className='archive-item';
+  const now=new Date();
+  item.innerHTML=`<div><div class="who">${name}</div><div class="q">"${currentQ.text}"</div></div><div style="font-size:12.5px;color:var(--ink-soft)">${now.toLocaleTimeString([], {hour:'2-digit',minute:'2-digit'})}</div>`;
+  list.prepend(item);
+}
+
+/* ---------- playback ---------- */
+function loadVoices(){
+  voicesCache = window.speechSynthesis ? window.speechSynthesis.getVoices() : [];
+}
+if('speechSynthesis' in window){
+  loadVoices();
+  window.speechSynthesis.onvoiceschanged = loadVoices;
+}
+
+function animateMiniWave(waveEl, durationMs){
+  const bars = waveEl.querySelectorAll('span');
+  const start = Date.now();
+  const iv = setInterval(()=>{
+    if(Date.now()-start > durationMs){
+      clearInterval(iv);
+      bars.forEach(b=>b.style.height='6px');
+      return;
+    }
+    bars.forEach(b=>{ b.style.height=(4+Math.random()*18)+'px'; });
+  }, 90);
+}
+
+function playAnswer(person, waveEl, btn){
+  if(person.playMode==='audio' && person.audioURL){
+    const audio = new Audio(person.audioURL);
+    btn.textContent='❚❚';
+    audio.play();
+    audio.onended = ()=>{ btn.textContent='▶'; };
+    audio.ontimeupdate = ()=>{}; // no-op, wave animated separately
+    animateMiniWave(waveEl, 4000);
+    audio.onended = ()=>{ btn.textContent='▶'; };
+    return;
+  }
+  if(!('speechSynthesis' in window) || !person.text){
+    animateMiniWave(waveEl, 1800);
+    return;
+  }
+  const utter = new SpeechSynthesisUtterance(person.text);
+  utter.pitch = person.pitch || 1;
+  utter.rate = person.rate || 1;
+  const estDuration = Math.max(1200, person.text.split(' ').length * 380 / (person.rate||1));
+  btn.textContent='❚❚';
+  animateMiniWave(waveEl, estDuration);
+  utter.onend = ()=>{ btn.textContent='▶'; };
+  window.speechSynthesis.cancel();
+  window.speechSynthesis.speak(utter);
+}
+
+/* ---------- waitlist ---------- */
+function joinWaitlist(e){
+  e.preventDefault();
+  document.getElementById('waitlistSuccess').style.display='block';
+  document.querySelector('.waitlist-form').style.display='none';
+}
+
+/* ---------- init ---------- */
+newRound();
+</script>
+</body>
+</html>
