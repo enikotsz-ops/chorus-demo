@@ -1,5 +1,5 @@
 import { supabase } from "./supabase";
-import type { Group, Member, Profile, Round } from "./types";
+import type { Answer, Group, Member, Profile, Round } from "./types";
 
 type RawRound = Omit<Round, "participants" | "question"> & {
   questions: Round["question"];
@@ -9,7 +9,7 @@ type RawRound = Omit<Round, "participants" | "question"> & {
 const ROUND_SELECT =
   "id, group_id, opens_at, base_deadline, deadline, extensions_used, status, unlocked_at, " +
   "questions(id, text, theme), round_participants(user_id), " +
-  "answers(id, user_id, storage_path, mime_type, duration_ms, created_at)";
+  "answers(id, user_id, speaker_name, storage_path, mime_type, duration_ms, created_at)";
 
 function toRound(r: RawRound): Round {
   const { questions, round_participants, ...rest } = r;
@@ -130,6 +130,26 @@ export async function hasUnlockInterest(rid: string, userId: string): Promise<bo
     await supabase.from("unlock_interest").select("round_id").eq("round_id", rid).eq("user_id", userId),
   ) as unknown[];
   return rows.length > 0;
+}
+
+/** Removes the audio file first, so a failed step can simply be retried. */
+export async function deleteAnswer(answer: Answer) {
+  const res = await supabase.storage.from("answers").remove([answer.storage_path]);
+  if (res.error) throw new Error(res.error.message);
+  check(await supabase.rpc("delete_answer", { aid: answer.id }));
+}
+
+/** Deletes the account. With keepRecordings, answers stay with their groups under the person's name. */
+export async function deleteAccount(keepRecordings: boolean) {
+  if (!keepRecordings) {
+    const paths = check(await supabase.rpc("my_answer_paths")) as string[];
+    for (let i = 0; i < paths.length; i += 100) {
+      const res = await supabase.storage.from("answers").remove(paths.slice(i, i + 100));
+      if (res.error) throw new Error(res.error.message);
+    }
+  }
+  check(await supabase.rpc("delete_my_account", { keep_recordings: keepRecordings }));
+  await supabase.auth.signOut({ scope: "local" }).catch(() => {});
 }
 
 export async function sendFeedback(userId: string, message: string, page: string) {

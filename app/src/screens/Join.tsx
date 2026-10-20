@@ -51,7 +51,7 @@ export function Join() {
       <div className="screen" style={{ justifyContent: "center" }}>
         <div className="card empty">
           <h2>This invite doesn't work</h2>
-          <p className="muted">The link may be mistyped, or the group may have been removed. Ask for a fresh link.</p>
+          <p className="muted">The link may be mistyped, or the circle may have been removed. Ask for a fresh link.</p>
           <button className="btn secondary" onClick={() => navigate("/")}>
             Go to Chorus
           </button>
@@ -73,7 +73,7 @@ export function Join() {
       <div className="stack">
         {error && <p className="error-text">{error}</p>}
         <button className="btn primary block" onClick={join} disabled={busy}>
-          {busy ? "Joining…" : userId ? "Join the group" : "Sign in to join"}
+          {busy ? "Joining…" : userId ? "Join the circle" : "Sign in to join"}
         </button>
       </div>
     </div>

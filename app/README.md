@@ -23,6 +23,7 @@ The landing page at the repo root is separate and untouched.
 - The round unlocks the moment the last person answers. It needs at least two people.
 - After the third extension, the round stays locked for good. Locked rounds show a "would you pay £2 to unlock?" interest button; no payment is taken.
 - People who join mid-round are added to open rounds nobody has answered yet; otherwise they start with the next question.
+- Recordings are kept until the person deletes them. People can delete any of their answers; when deleting their account they choose to remove all recordings or leave them with their circles (credited by name).
 - Push reminders: new question, evening reminder (at the group's release hour in each person's own time zone, during the last two days), each extension, unlock, and permanent lock.
 
 ## Setup
@@ -30,7 +31,7 @@ The landing page at the repo root is separate and untouched.
 ### 1. Supabase project
 
 1. Create a project at supabase.com.
-2. Run the three files in `supabase/migrations/` in order, in the SQL editor (or `supabase db push` with the Supabase CLI linked to the project).
+2. Run the files in `supabase/migrations/` in order (or paste `supabase/setup/database-all-in-one.sql`), in the SQL editor (or `supabase db push` with the Supabase CLI linked to the project).
 3. **Authentication → URL configuration**: set Site URL to `https://app.getchorus.org` and add it (plus `http://localhost:5173` for development) to Redirect URLs.
 4. **Authentication → Email templates → Magic link**: make sure the template includes the code, for example `Your Chorus code is {{ .Token }}`. On iPhone, a Home Screen app can't pick up a link opened in Safari, so people need to type the code.
 5. Supabase's built-in email sender has low sending limits meant for testing. Before inviting real users, set up custom SMTP (Authentication → SMTP settings) with a provider such as Resend or Postmark. Check Supabase's docs for the current limits.

@@ -1,10 +1,12 @@
-import { useCallback, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
 import { FeedbackSheet } from "../components/FeedbackSheet";
 import { Icon } from "../components/Icon";
+import { Avatar } from "../components/Avatar";
+import { CircleSwitcher, LAST_CIRCLE } from "../components/CircleSwitcher";
 import { MemberStatus } from "../components/MemberStatus";
 import { getGroup, getMembers, getRounds } from "../lib/api";
-import { useUserId } from "../lib/auth";
+import { useAuth, useUserId } from "../lib/auth";
 import { formatDate, isUrgent, timeLeft } from "../lib/time";
 import type { Member, Round } from "../lib/types";
 import { usePoll } from "../lib/usePoll";
@@ -50,8 +52,18 @@ function RoundCard({ round, members, me }: { round: Round; members: Member[]; me
 export function GroupHome() {
   const { groupId = "" } = useParams();
   const me = useUserId();
+  const { profile } = useAuth();
   const navigate = useNavigate();
   const [feedback, setFeedback] = useState(false);
+
+  // Reopen the app in the circle you used last.
+  useEffect(() => {
+    try {
+      localStorage.setItem(LAST_CIRCLE, groupId);
+    } catch {
+      /* storage blocked */
+    }
+  }, [groupId]);
   const load = useCallback(
     () => Promise.all([getGroup(groupId), getMembers(groupId), getRounds(groupId)]),
     [groupId],
@@ -62,13 +74,13 @@ export function GroupHome() {
     return (
       <div className="screen" style={{ justifyContent: "center" }}>
         <div className="card empty">
-          <h2>Couldn't load this group</h2>
-          <p className="muted">Check your connection. If you were removed from the group, it won't be available any more.</p>
+          <h2>Couldn't load this circle</h2>
+          <p className="muted">Check your connection. If you were removed from the circle, it won't be available any more.</p>
           <button className="btn primary" onClick={refresh}>
             Try again
           </button>
           <button className="link-btn" onClick={() => navigate("/")}>
-            All groups
+            Your circles
           </button>
         </div>
       </div>
@@ -102,18 +114,11 @@ export function GroupHome() {
   return (
     <div className="screen">
       <div className="topbar">
-        <button
-          className="icon-btn"
-          aria-label="All groups"
-          onClick={() => {
-            sessionStorage.setItem("chorus:stay-home", "1");
-            navigate("/");
-          }}
-        >
-          <Icon name="back" />
-        </button>
-        <span className="topbar-title">{group.name}</span>
-        <Link to={`/g/${group.id}/settings`} className="icon-btn" aria-label="Group settings">
+        <Link to="/settings" aria-label="Your settings" style={{ textDecoration: "none" }}>
+          <Avatar id={me} name={profile?.display_name} size={44} />
+        </Link>
+        <CircleSwitcher current={group} />
+        <Link to={`/g/${group.id}/settings`} className="icon-btn" aria-label="Circle settings">
           <Icon name="settings" />
         </Link>
       </div>

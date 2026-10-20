@@ -3,10 +3,73 @@ import { useNavigate } from "react-router-dom";
 import { FeedbackSheet } from "../components/FeedbackSheet";
 import { Icon } from "../components/Icon";
 import { NotificationsCard } from "../components/NotificationsCard";
+import { Sheet } from "../components/Sheet";
 import { useToast } from "../components/Toast";
-import { saveProfile } from "../lib/api";
+import { deleteAccount, saveProfile } from "../lib/api";
 import { useAuth } from "../lib/auth";
 import { supabase } from "../lib/supabase";
+
+function DeleteAccountSheet({ open, onClose }: { open: boolean; onClose: () => void }) {
+  const [keep, setKeep] = useState<boolean | null>(null);
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  const remove = async () => {
+    setBusy(true);
+    setError(null);
+    try {
+      await deleteAccount(keep!);
+      localStorage.clear();
+      window.location.replace("/");
+    } catch (e) {
+      setError(`Something went wrong, and your account has not been deleted. Please try again. (${(e as Error).message})`);
+      setBusy(false);
+    }
+  };
+
+  const option = (value: boolean, title: string, body: string) => (
+    <button
+      className="list-item"
+      style={{ background: "var(--paper)", outline: keep === value ? "2px solid var(--ink)" : undefined, alignItems: "flex-start" }}
+      onClick={() => setKeep(value)}
+      aria-pressed={keep === value}
+    >
+      <span className="grow">
+        <span style={{ fontWeight: 600, display: "block" }}>{title}</span>
+        <span className="small muted">{body}</span>
+      </span>
+      {keep === value && <Icon name="check" />}
+    </button>
+  );
+
+  return (
+    <Sheet open={open} onClose={busy ? () => {} : onClose}>
+      <h3>Delete your account</h3>
+      <p className="muted small">
+        Your email, name and reminders will be deleted, and you'll leave all your circles. This can't be undone. What should
+        happen to the answers you've already shared?
+      </p>
+      {option(false, "Remove all my recordings", "They're deleted from every circle. Nobody will be able to hear them again.")}
+      {option(
+        true,
+        "Leave my recordings with my circles",
+        "Your circles can keep listening to them, shown under your name. You won't be able to delete them later.",
+      )}
+      {error && <p className="error-text">{error}</p>}
+      <button
+        className="btn primary block"
+        style={{ background: keep === null ? undefined : "var(--red)" }}
+        disabled={keep === null || busy}
+        onClick={remove}
+      >
+        {busy ? "Deleting…" : "Delete my account"}
+      </button>
+      <button className="btn secondary block" onClick={onClose} disabled={busy}>
+        Cancel
+      </button>
+    </Sheet>
+  );
+}
 
 export function Settings() {
   const { userId, profile, session, refreshProfile } = useAuth();
@@ -14,6 +77,7 @@ export function Settings() {
   const toast = useToast();
   const [name, setName] = useState(profile?.display_name ?? "");
   const [feedback, setFeedback] = useState(false);
+  const [deleting, setDeleting] = useState(false);
 
   const saveName = async () => {
     try {
@@ -40,13 +104,26 @@ export function Settings() {
           <label htmlFor="name">Your name</label>
           <input id="name" className="input" value={name} maxLength={40} onChange={(e) => setName(e.target.value)} />
         </div>
-        <button className="btn secondary block" style={{ background: "var(--paper)" }} disabled={!name.trim() || name === profile?.display_name} onClick={saveName}>
+        <button
+          className="btn secondary block"
+          style={{ background: "var(--paper)" }}
+          disabled={!name.trim() || name === profile?.display_name}
+          onClick={saveName}
+        >
           Save name
         </button>
         <p className="small muted">Signed in as {session?.user.email}</p>
       </div>
 
       <NotificationsCard />
+
+      <div className="card quiet">
+        <h3>Your recordings</h3>
+        <p className="small muted">
+          Your answers are kept until you delete them. Only members of your circles can hear them, and only once everyone
+          has answered. You can delete any answer from its question screen.
+        </p>
+      </div>
 
       <button className="list-item" onClick={() => setFeedback(true)}>
         <Icon name="chat" />
@@ -56,7 +133,7 @@ export function Settings() {
 
       <div className="spacer" />
       <button
-        className="btn danger block"
+        className="btn secondary block"
         onClick={async () => {
           await supabase.auth.signOut();
           navigate("/", { replace: true });
@@ -64,7 +141,11 @@ export function Settings() {
       >
         Sign out
       </button>
+      <button className="btn danger block" onClick={() => setDeleting(true)}>
+        Delete account
+      </button>
       <FeedbackSheet open={feedback} onClose={() => setFeedback(false)} />
+      <DeleteAccountSheet open={deleting} onClose={() => setDeleting(false)} />
     </div>
   );
 }

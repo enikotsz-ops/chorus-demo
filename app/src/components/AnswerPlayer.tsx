@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { audioUrl } from "../lib/api";
 import { formatDuration } from "../lib/time";
-import type { Member, Round } from "../lib/types";
+import type { Answer, Member, Round } from "../lib/types";
 import { Avatar } from "./Avatar";
 import { Icon } from "./Icon";
 
@@ -19,7 +19,8 @@ export function AnswerPlayer({ round, members }: { round: Round; members: Member
   const audio = useRef<HTMLAudioElement>(null);
   const urls = useRef<Record<string, string>>({});
 
-  const nameOf = (uid: string) => members.find((m) => m.user_id === uid)?.profile?.display_name ?? "Former member";
+  const nameOf = (a: Answer) =>
+    members.find((m) => m.user_id === a.user_id)?.profile?.display_name ?? a.speaker_name ?? "Former member";
 
   const load = async (index: number) => {
     const a = round.answers[index];
@@ -39,7 +40,7 @@ export function AnswerPlayer({ round, members }: { round: Round; members: Member
       setLoading(false);
     }
     if ("mediaSession" in navigator) {
-      navigator.mediaSession.metadata = new MediaMetadata({ title: nameOf(a.user_id), artist: "Chorus", album: round.question.text });
+      navigator.mediaSession.metadata = new MediaMetadata({ title: nameOf(a), artist: "Chorus", album: round.question.text });
     }
   };
 
@@ -82,13 +83,13 @@ export function AnswerPlayer({ round, members }: { round: Round; members: Member
 
       {round.answers.map((a, i) => (
         <div className={`player-item ${current === i ? "active" : ""}`} key={a.id}>
-          <button className="play-btn" onClick={() => toggle(i)} aria-label={current === i && playing ? "Pause" : `Play ${nameOf(a.user_id)}`}>
+          <button className="play-btn" onClick={() => toggle(i)} aria-label={current === i && playing ? "Pause" : `Play ${nameOf(a)}`}>
             {current === i && loading ? "…" : <Icon name={current === i && playing ? "pause" : "play"} size={20} />}
           </button>
-          <Avatar id={a.user_id} name={nameOf(a.user_id)} size={36} />
+          <Avatar id={a.user_id ?? a.id} name={nameOf(a)} size={36} />
           <div style={{ flex: 1, minWidth: 0 }}>
             <div className="row" style={{ justifyContent: "space-between" }}>
-              <span className="member-name">{nameOf(a.user_id)}</span>
+              <span className="member-name">{nameOf(a)}</span>
               <span className="small muted">{formatDuration(a.duration_ms)}</span>
             </div>
             <div className="progress">

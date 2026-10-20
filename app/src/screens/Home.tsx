@@ -1,5 +1,6 @@
 import { useCallback } from "react";
 import { Link, Navigate, useNavigate } from "react-router-dom";
+import { LAST_CIRCLE } from "../components/CircleSwitcher";
 import { Icon } from "../components/Icon";
 import { myGroups } from "../lib/api";
 import { useAuth } from "../lib/auth";
@@ -11,9 +12,16 @@ export function Home() {
   const load = useCallback(() => myGroups(userId!), [userId]);
   const { data: groups, error, refresh } = usePoll(load, 60000);
 
-  // Most people have one group: go straight there.
-  if (groups?.length === 1 && !sessionStorage.getItem("chorus:stay-home")) {
-    return <Navigate to={`/g/${groups[0].id}`} replace />;
+  // Open the circle used last (or the only one); the top bar switches between them.
+  if (groups?.length) {
+    let last: string | null = null;
+    try {
+      last = localStorage.getItem(LAST_CIRCLE);
+    } catch {
+      /* storage blocked */
+    }
+    const target = groups.find((g) => g.id === last) ?? groups[0];
+    return <Navigate to={`/g/${target.id}`} replace />;
   }
 
   return (
@@ -28,7 +36,7 @@ export function Home() {
 
       {error && (
         <div className="banner warn">
-          <span style={{ flex: 1 }}>Couldn't load your groups.</span>
+          <span style={{ flex: 1 }}>Couldn't load your circles.</span>
           <button className="link-btn" onClick={refresh}>
             Retry
           </button>
@@ -47,7 +55,7 @@ export function Home() {
           <span className="empty-icon">
             <Icon name="mic" size={30} />
           </span>
-          <h2>Start your first group</h2>
+          <h2>Start your first circle</h2>
           <p className="muted">
             Invite your family or close friends. Every week you'll all answer the same question, and hear each other once
             everyone has.
@@ -61,7 +69,7 @@ export function Home() {
             <Link key={g.id} to={`/g/${g.id}`} className="list-item">
               <div className="grow">
                 <h3>{g.name}</h3>
-                <span className="small muted">{g.role === "admin" ? "You run this group" : "Member"}</span>
+                <span className="small muted">{g.role === "admin" ? "You run this circle" : "Member"}</span>
               </div>
               <Icon name="chevron" />
             </Link>
@@ -72,10 +80,10 @@ export function Home() {
       <div className="spacer" />
       <div className="stack">
         <button className="btn primary block" onClick={() => navigate("/new")}>
-          <Icon name="plus" /> Create a group
+          <Icon name="plus" /> Create a circle
         </button>
         <p className="small muted" style={{ textAlign: "center" }}>
-          Joining someone else's group? Open the invite link they sent you.
+          Joining someone else's circle? Open the invite link they sent you.
         </p>
       </div>
     </div>

@@ -91,7 +91,6 @@ export function GroupSettings() {
     setLeaving(false);
     try {
       await leaveGroup(group.id);
-      sessionStorage.setItem("chorus:stay-home", "1");
       navigate("/", { replace: true });
     } catch (e) {
       toast((e as Error).message);
@@ -104,7 +103,7 @@ export function GroupSettings() {
         <button className="icon-btn" onClick={() => navigate(`/g/${group.id}`)} aria-label="Back">
           <Icon name="back" />
         </button>
-        <span className="topbar-title">Group</span>
+        <span className="topbar-title">Circle</span>
         <span style={{ width: 52 }} />
       </div>
 
@@ -146,7 +145,7 @@ export function GroupSettings() {
         <div className="card">
           <h3>Rhythm</h3>
           <div className="field">
-            <label htmlFor="gname">Group name</label>
+            <label htmlFor="gname">Circle name</label>
             <input id="gname" className="input" value={name} maxLength={60} onChange={(e) => setName(e.target.value)} />
           </div>
           <div className="field">
@@ -175,7 +174,7 @@ export function GroupSettings() {
             </select>
           </div>
           <div className="field">
-            <label htmlFor="tz">Group time zone</label>
+            <label htmlFor="tz">Circle time zone</label>
             <select id="tz" className="input" value={tz} onChange={(e) => setTz(e.target.value)}>
               {(TIMEZONES.includes(tz) ? TIMEZONES : [tz, ...TIMEZONES]).map((z) => (
                 <option key={z} value={z}>
@@ -193,13 +192,13 @@ export function GroupSettings() {
         <div className="card quiet">
           <p className="small muted">
             {group.questions_per_week} question{group.questions_per_week > 1 ? "s" : ""} a week, arriving at{" "}
-            {formatHour(group.release_hour)} ({group.timezone.replace(/_/g, " ")}). Only the group admin can change this.
+            {formatHour(group.release_hour)} ({group.timezone.replace(/_/g, " ")}). Only the circle admin can change this.
           </p>
         </div>
       )}
 
       <button className="btn danger block" onClick={() => setLeaving(true)}>
-        Leave group
+        Leave circle
       </button>
 
       <Confirm
@@ -213,9 +212,9 @@ export function GroupSettings() {
       />
       <Confirm
         open={leaving}
-        title="Leave this group?"
-        body="You'll stop getting questions and lose access to the group's archive. Someone can invite you back later."
-        confirmLabel="Leave group"
+        title="Leave this circle?"
+        body="You'll stop getting questions and lose access to the circle's archive. Someone can invite you back later."
+        confirmLabel="Leave circle"
         danger
         onConfirm={doLeave}
         onClose={() => setLeaving(false)}

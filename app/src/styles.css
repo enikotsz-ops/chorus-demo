@@ -820,3 +820,28 @@ textarea.input {
 .banner svg {
   flex: none;
 }
+
+.switcher {
+  background: none;
+  border: 0;
+  min-height: var(--tap);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  cursor: pointer;
+  min-width: 0;
+}
+
+.switcher-name {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.switcher-caret {
+  transform: rotate(90deg);
+  color: var(--muted-2);
+  display: inline-flex;
+  flex: none;
+}

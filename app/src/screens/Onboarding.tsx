@@ -36,7 +36,7 @@ export function Onboarding({ onDone }: { onDone: () => void }) {
       {step === 0 ? (
         <>
           <div className="stack" style={{ gap: 16, marginTop: 24 }}>
-            <h1>What should your group call you?</h1>
+            <h1>What should your circle call you?</h1>
             <p className="muted">This is how you'll appear next to your answers, like Mum, Dad or Leo.</p>
             <input
               className="input"
@@ -58,7 +58,7 @@ export function Onboarding({ onDone }: { onDone: () => void }) {
         <>
           <div className="stack" style={{ gap: 16, marginTop: 24 }}>
             <h1>Never miss a question</h1>
-            <p className="muted">Questions arrive in the evening, and your group can't hear anything until you've answered.</p>
+            <p className="muted">Questions arrive in the evening, and your circle can't hear anything until you've answered.</p>
             <NotificationsCard />
           </div>
           <div className="spacer" />

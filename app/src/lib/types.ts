@@ -3,7 +3,7 @@ export type Profile = { id: string; display_name: string | null; timezone: strin
 export type Group = {
   id: string;
   name: string;
-  created_by: string;
+  created_by: string | null;
   questions_per_week: number;
   release_hour: number;
   timezone: string;
@@ -15,7 +15,9 @@ export type Member = { user_id: string; role: "admin" | "member"; profile?: Prof
 
 export type Answer = {
   id: string;
-  user_id: string;
+  /** null once the speaker deleted their account but left the recording */
+  user_id: string | null;
+  speaker_name: string | null;
   storage_path: string;
   mime_type: string;
   duration_ms: number;

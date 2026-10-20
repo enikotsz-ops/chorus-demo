@@ -55,7 +55,7 @@ export function SignIn() {
             Keep them forever.
           </b>
         </p>
-        <p className="muted">Each week your group answers the same question by voice. Nobody hears anything until everyone has answered.</p>
+        <p className="muted">Each week your circle answers the same question by voice. Nobody hears anything until everyone has answered.</p>
       </div>
 
       {step === "email" ? (

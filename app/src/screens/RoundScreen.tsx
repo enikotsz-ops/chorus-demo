@@ -6,7 +6,15 @@ import { MemberStatus } from "../components/MemberStatus";
 import { RecorderDock } from "../components/RecorderDock";
 import { Confirm } from "../components/Sheet";
 import { useToast } from "../components/Toast";
-import { getGroup, getMembers, getRound, hasUnlockInterest, registerUnlockInterest, shuffleQuestion } from "../lib/api";
+import {
+  deleteAnswer,
+  getGroup,
+  getMembers,
+  getRound,
+  hasUnlockInterest,
+  registerUnlockInterest,
+  shuffleQuestion,
+} from "../lib/api";
 import { useUserId } from "../lib/auth";
 import { formatDate, isUrgent } from "../lib/time";
 import { usePoll } from "../lib/usePoll";
@@ -20,6 +28,8 @@ export function RoundScreen() {
   const [shuffling, setShuffling] = useState(false);
   const [confirmShuffle, setConfirmShuffle] = useState(false);
   const [interest, setInterest] = useState(false);
+  const [confirmDelete, setConfirmDelete] = useState(false);
+  const [deleting, setDeleting] = useState(false);
 
   const load = useCallback(async () => {
     const round = await getRound(roundId);
@@ -88,6 +98,20 @@ export function RoundScreen() {
     }
   };
 
+  const removeMyAnswer = async () => {
+    setConfirmDelete(false);
+    setDeleting(true);
+    try {
+      await deleteAnswer(myAnswer!);
+      toast("Your answer was deleted");
+      await refresh();
+    } catch (e) {
+      toast(`Couldn't delete it. Please try again. (${(e as Error).message})`);
+    } finally {
+      setDeleting(false);
+    }
+  };
+
   const wantUnlock = async () => {
     try {
       await registerUnlockInterest(round.id, me);
@@ -100,7 +124,7 @@ export function RoundScreen() {
   return (
     <div className={`screen ${canRecord ? "with-dock" : ""}`}>
       <div className="topbar">
-        <button className="icon-btn" onClick={() => navigate(`/g/${group.id}`)} aria-label="Back to group">
+        <button className="icon-btn" onClick={() => navigate(`/g/${group.id}`)} aria-label="Back to circle">
           <Icon name="back" />
         </button>
         <span className="topbar-title">{group.name}</span>
@@ -185,6 +209,12 @@ export function RoundScreen() {
         </div>
       )}
 
+      {myAnswer && (
+        <button className="btn danger block" onClick={() => setConfirmDelete(true)} disabled={deleting}>
+          <Icon name="trash" size={20} /> {deleting ? "Deleting…" : "Delete my answer"}
+        </button>
+      )}
+
       {canRecord && (
         <RecorderDock
           roundId={round.id}
@@ -197,9 +227,22 @@ export function RoundScreen() {
       )}
 
       <Confirm
+        open={confirmDelete}
+        title="Delete your answer?"
+        body={
+          round.status === "open"
+            ? "Your recording will be removed. You can record a new one before the deadline."
+            : "Your recording will be removed for good. Nobody in the circle will be able to hear it again."
+        }
+        confirmLabel="Delete my answer"
+        danger
+        onConfirm={removeMyAnswer}
+        onClose={() => setConfirmDelete(false)}
+      />
+      <Confirm
         open={confirmShuffle}
         title="Swap the question?"
-        body="Everyone in the group will see the new question. You can only do this before anyone has answered."
+        body="Everyone in the circle will see the new question. You can only do this before anyone has answered."
         confirmLabel="Show a new question"
         onConfirm={shuffle}
         onClose={() => setConfirmShuffle(false)}

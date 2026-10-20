@@ -29,13 +29,13 @@ export function NewGroup() {
         <button className="icon-btn" onClick={() => navigate(-1)} aria-label="Back">
           <Icon name="back" />
         </button>
-        <span className="topbar-title">New group</span>
+        <span className="topbar-title">New circle</span>
         <span style={{ width: 52 }} />
       </div>
 
       <div className="stack" style={{ gap: 20 }}>
         <div className="field">
-          <label htmlFor="gname">Group name</label>
+          <label htmlFor="gname">Circle name</label>
           <input
             id="gname"
             className="input"
@@ -67,7 +67,7 @@ export function NewGroup() {
       {error && <p className="error-text">{error}</p>}
       <div className="spacer" />
       <button className="btn primary block" disabled={!name.trim() || busy} onClick={create}>
-        {busy ? "Creating…" : "Create group"}
+        {busy ? "Creating…" : "Create circle"}
       </button>
     </div>
   );
