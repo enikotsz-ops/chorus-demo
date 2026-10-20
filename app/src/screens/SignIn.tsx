@@ -49,7 +49,11 @@ export function SignIn() {
           One question.
           <br />A memory.
           <br />
-          <b>Hear the stories while you still can.</b>
+          <b>
+            Collect the stories.
+            <br />
+            Keep them forever.
+          </b>
         </p>
         <p className="muted">Each week your group answers the same question by voice. Nobody hears anything until everyone has answered.</p>
       </div>

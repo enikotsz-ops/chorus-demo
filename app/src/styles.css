@@ -760,7 +760,7 @@ textarea.input {
 
 .hero {
   font-family: var(--font-head);
-  font-size: 44px;
+  font-size: clamp(32px, 10vw, 44px);
   line-height: 1.02;
   letter-spacing: -0.035em;
   font-weight: 400;
