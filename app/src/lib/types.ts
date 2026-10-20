@@ -1,0 +1,37 @@
+export type Profile = { id: string; display_name: string | null; timezone: string };
+
+export type Group = {
+  id: string;
+  name: string;
+  created_by: string;
+  questions_per_week: number;
+  release_hour: number;
+  timezone: string;
+  invite_code: string;
+  next_release_at: string | null;
+};
+
+export type Member = { user_id: string; role: "admin" | "member"; profile?: Profile };
+
+export type Answer = {
+  id: string;
+  user_id: string;
+  storage_path: string;
+  mime_type: string;
+  duration_ms: number;
+  created_at: string;
+};
+
+export type Round = {
+  id: string;
+  group_id: string;
+  opens_at: string;
+  base_deadline: string;
+  deadline: string;
+  extensions_used: number;
+  status: "open" | "unlocked" | "expired";
+  unlocked_at: string | null;
+  question: { id: number; text: string; theme: string };
+  participants: string[];
+  answers: Answer[];
+};
