@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import { submitAnswer } from "../lib/api";
+import { QuestionChangedError, submitAnswer } from "../lib/api";
 import { clearDraft, loadDraft, saveDraft } from "../lib/drafts";
 import { formatDuration } from "../lib/time";
 import { MAX_MS, WARN_MS, useRecorder } from "../lib/useRecorder";
@@ -8,12 +8,17 @@ import { Icon } from "./Icon";
 /** Bottom-anchored record → preview → submit flow, within thumb reach. */
 export function RecorderDock({
   roundId,
+  questionId,
   userId,
   onSubmitted,
+  onQuestionChanged,
 }: {
   roundId: string;
   userId: string;
   onSubmitted: (unlocked: boolean) => void;
+  /** The question was swapped while recording; the take has been discarded. */
+  onQuestionChanged: () => void;
+  questionId: number;
 }) {
   const r = useRecorder();
   const [submitting, setSubmitting] = useState(false);
@@ -24,7 +29,12 @@ export function RecorderDock({
 
   // Bring back a take that wasn't submitted last time.
   useEffect(() => {
-    loadDraft(roundId).then((d) => d && r.restore(d.blob, d.durationMs));
+    loadDraft(roundId).then((d) => {
+      if (!d) return;
+      // A take recorded for a question that has since been swapped is no use.
+      if (d.questionId !== undefined && d.questionId !== questionId) clearDraft(roundId);
+      else r.restore(d.blob, d.durationMs);
+    });
   }, [roundId]);
 
   useEffect(() => {
@@ -32,11 +42,11 @@ export function RecorderDock({
       setPreviewUrl(null);
       return;
     }
-    saveDraft(roundId, { blob: r.blob, durationMs: r.durationMs, savedAt: Date.now() });
+    saveDraft(roundId, { blob: r.blob, durationMs: r.durationMs, savedAt: Date.now(), questionId });
     const url = URL.createObjectURL(r.blob);
     setPreviewUrl(url);
     return () => URL.revokeObjectURL(url);
-  }, [r.blob, r.durationMs, roundId]);
+  }, [r.blob, r.durationMs, roundId, questionId]);
 
   const togglePreview = () => {
     const el = audio.current;
@@ -57,11 +67,18 @@ export function RecorderDock({
     setSubmitting(true);
     setError(null);
     try {
-      const unlocked = await submitAnswer(roundId, userId, r.blob, r.durationMs);
+      const unlocked = await submitAnswer(roundId, userId, r.blob, r.durationMs, questionId);
       await clearDraft(roundId);
       navigator.vibrate?.([10, 40, 10]);
       onSubmitted(unlocked);
     } catch (e) {
+      if (e instanceof QuestionChangedError) {
+        audio.current?.pause();
+        await clearDraft(roundId);
+        r.discard();
+        onQuestionChanged();
+        return;
+      }
       setError(`Couldn't send your answer. It's saved on this device, so you can try again. (${(e as Error).message})`);
     } finally {
       setSubmitting(false);

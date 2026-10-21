@@ -116,15 +116,45 @@ const EXT: Record<string, string> = {
   "audio/aac": "aac",
 };
 
+/** The question was swapped by someone else after this person started recording. */
+export class QuestionChangedError extends Error {
+  constructor() {
+    super("question_changed");
+  }
+}
+
 /** Uploads the recording, then registers it. Returns true if the round unlocked. */
-export async function submitAnswer(rid: string, userId: string, blob: Blob, durationMs: number): Promise<boolean> {
+export async function submitAnswer(
+  rid: string,
+  userId: string,
+  blob: Blob,
+  durationMs: number,
+  questionId: number,
+): Promise<boolean> {
+  // Cheap check first, so a stale recording isn't uploaded at all.
+  const current = check(await supabase.from("rounds").select("question_id").eq("id", rid).single()) as {
+    question_id: number;
+  };
+  if (current.question_id !== questionId) throw new QuestionChangedError();
+
   const mime = blob.type.split(";")[0] || "audio/webm";
   const path = `${rid}/${userId}/${Date.now()}.${EXT[mime] ?? "audio"}`;
   const up = await supabase.storage.from("answers").upload(path, blob, { contentType: mime });
   if (up.error) throw new Error(up.error.message);
-  return check(
-    await supabase.rpc("submit_answer", { rid, path, mime, duration: Math.max(1, Math.round(durationMs)) }),
-  ) as boolean;
+  const res = await supabase.rpc("submit_answer", {
+    rid,
+    path,
+    mime,
+    duration: Math.max(1, Math.round(durationMs)),
+    qid: questionId,
+  });
+  if (res.error) {
+    // Don't leave an orphaned file behind.
+    await supabase.storage.from("answers").remove([path]);
+    if (res.error.message.includes("question_changed")) throw new QuestionChangedError();
+    throw new Error(res.error.message);
+  }
+  return res.data as boolean;
 }
 
 export async function audioUrl(path: string): Promise<string> {

@@ -1,6 +1,6 @@
 // Keeps an unsent recording on the device so a failed upload or a closed tab
 // doesn't lose someone's answer.
-type Draft = { blob: Blob; durationMs: number; savedAt: number };
+type Draft = { blob: Blob; durationMs: number; savedAt: number; questionId?: number };
 
 function db(): Promise<IDBDatabase> {
   return new Promise((resolve, reject) => {

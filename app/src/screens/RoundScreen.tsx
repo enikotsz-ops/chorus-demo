@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { AnswerPlayer } from "../components/AnswerPlayer";
 import { FeedbackSheet } from "../components/FeedbackSheet";
@@ -31,6 +31,9 @@ export function RoundScreen() {
   const [interest, setInterest] = useState(false);
   const [confirmDelete, setConfirmDelete] = useState(false);
   const [ask, setAsk] = useState<{ context: string; title: string; prompt: string } | null>(null);
+  const [questionChanged, setQuestionChanged] = useState(false);
+  const seenQuestion = useRef<number | null>(null);
+  const changedByMe = useRef(false);
 
   // Ask for feedback at a few key moments, once each per person.
   const askOnce = (key: string, question: { context: string; title: string; prompt: string }) => {
@@ -50,6 +53,18 @@ export function RoundScreen() {
     return { round, group, members };
   }, [roundId]);
   const { data, error, refresh } = usePoll(load, 15000);
+
+  // Someone else swapped the question while this screen was open.
+  const questionId = data?.round.question.id;
+  useEffect(() => {
+    if (questionId === undefined) return;
+    if (seenQuestion.current !== null && seenQuestion.current !== questionId && !changedByMe.current) {
+      setQuestionChanged(true);
+      navigator.vibrate?.([20, 60, 20]);
+    }
+    changedByMe.current = false;
+    seenQuestion.current = questionId;
+  }, [questionId]);
 
   useEffect(() => {
     if (data?.round.status === "expired") hasUnlockInterest(roundId, me).then(setInterest).catch(() => {});
@@ -87,6 +102,7 @@ export function RoundScreen() {
     setConfirmShuffle(false);
     setShuffling(true);
     try {
+      changedByMe.current = true;
       await shuffleQuestion(round.id);
       await refresh();
     } catch (e) {
@@ -144,7 +160,18 @@ export function RoundScreen() {
         <span style={{ width: 52 }} />
       </div>
 
-      <div className="card">
+      {questionChanged && (
+        <div className="banner warn">
+          <span style={{ flex: 1 }}>
+            <b>The question has just changed.</b> Someone in your circle picked a new one, shown below.
+          </span>
+          <button className="link-btn" onClick={() => setQuestionChanged(false)}>
+            OK
+          </button>
+        </div>
+      )}
+
+      <div className="card" style={questionChanged ? { outline: "3px solid var(--amber)" } : undefined}>
         <div className="card-meta">
           <span className="pill">{round.question.theme}</span>
           {round.status === "open" ? (
@@ -256,6 +283,12 @@ export function RoundScreen() {
       {canRecord && (
         <RecorderDock
           roundId={round.id}
+          questionId={round.question.id}
+          onQuestionChanged={() => {
+            setQuestionChanged(true);
+            toast("The question changed while you were recording. Please record your answer to the new one.");
+            refresh();
+          }}
           userId={me}
           onSubmitted={(unlocked) => {
             toast(unlocked ? "Everyone's answered. The round is unlocked!" : "Sent. Your answer is locked in.");
