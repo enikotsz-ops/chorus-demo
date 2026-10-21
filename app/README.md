@@ -16,6 +16,10 @@ The landing page at the repo root is separate and untouched.
 | 1 | Mon | 7 days | 1 day, 6 hours, 1 hour |
 | 2 | Mon, Thu | 3 to 4 days | 12 hours, 3 hours, 30 minutes |
 | 3 | Mon, Wed, Fri | 2 to 3 days | 8 hours, 2 hours, 20 minutes |
+| 4 | Mon, Wed, Fri, Sun | 1 to 2 days | 6 hours, 2 hours, 30 minutes |
+| 5 | Mon to Fri | 1 day (3 over the weekend) | 3 hours, 1 hour, 15 minutes |
+| 6 | Mon to Sat | 1 day (2 over the weekend) | 3 hours, 1 hour, 15 minutes |
+| 7 | Every day | 1 day | 3 hours, 1 hour, 15 minutes |
 
 - Questions arrive at 6pm by default; the group admin can change the time, time zone and questions per week.
 - "New question" works only before anyone has answered.
@@ -26,7 +30,7 @@ The landing page at the repo root is separate and untouched.
 - Recordings are kept until the person deletes them. People can delete any of their answers; when deleting their account they choose to remove all recordings or leave them with their circles (credited by name).
 - After answering (or once a round closes), people can give the question a thumbs up or down.
 - Once a round unlocks, members can react to each voice answer with emojis and leave text comments in a thread under it. Comments notify the speaker and earlier commenters.
-- Push reminders: new question, evening reminder (at the group's release hour in each person's own time zone, during the last two days), each extension, unlock, and permanent lock.
+- Push reminders: new question, evening reminder (up to 3 a week: at the release hour in each person's own time zone, during the last two days; 4 or more a week: about 4 hours before the deadline), each extension, unlock, and permanent lock.
 
 ## Setup
 

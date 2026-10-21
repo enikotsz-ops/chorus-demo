@@ -45,3 +45,18 @@ export function timeAgo(iso: string, now = Date.now()) {
   if (days < 7) return `${days} d ago`;
   return formatDate(iso);
 }
+
+/** Plain-language summary of a circle's rhythm, matching release_days and extension_length in the database. */
+export function describeSchedule(qpw: number) {
+  const schedules: Record<number, [string, string, string]> = {
+    1: ["Every Monday", "7 days to answer", "1 day, 6 hours and 1 hour"],
+    2: ["Monday and Thursday", "3 to 4 days to answer", "12 hours, 3 hours and 30 minutes"],
+    3: ["Monday, Wednesday and Friday", "2 to 3 days to answer", "8 hours, 2 hours and 20 minutes"],
+    4: ["Monday, Wednesday, Friday and Sunday", "1 to 2 days to answer", "6 hours, 2 hours and 30 minutes"],
+    5: ["Every weekday", "1 day to answer (3 over the weekend)", "3 hours, 1 hour and 15 minutes"],
+    6: ["Monday to Saturday", "1 day to answer (2 over the weekend)", "3 hours, 1 hour and 15 minutes"],
+    7: ["Every day", "1 day to answer", "3 hours, 1 hour and 15 minutes"],
+  };
+  const [days, window, extra] = schedules[qpw] ?? schedules[1];
+  return { days, window, extra };
+}

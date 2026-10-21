@@ -6,7 +6,7 @@ import { Confirm } from "../components/Sheet";
 import { useToast } from "../components/Toast";
 import { getGroup, getMembers, leaveGroup, removeMember, updateGroupSettings } from "../lib/api";
 import { useUserId } from "../lib/auth";
-import { TIMEZONES, formatHour } from "../lib/time";
+import { TIMEZONES, describeSchedule, formatHour } from "../lib/time";
 import type { Member } from "../lib/types";
 import { usePoll } from "../lib/usePoll";
 
@@ -151,16 +151,14 @@ export function GroupSettings() {
           <div className="field">
             <label>Questions per week</label>
             <div className="segmented" role="group">
-              {[1, 2, 3].map((n) => (
+              {[1, 2, 3, 4, 5, 6, 7].map((n) => (
                 <button key={n} aria-pressed={qpw === n} onClick={() => setQpw(n)}>
                   {n}
                 </button>
               ))}
             </div>
             <p className="small muted">
-              {qpw === 1 && "Every Monday. 7 days to answer, then extra time of 1 day, 6 hours and 1 hour."}
-              {qpw === 2 && "Monday and Thursday. 3 to 4 days to answer, then extra time of 12 hours, 3 hours and 30 minutes."}
-              {qpw === 3 && "Monday, Wednesday and Friday. 2 to 3 days to answer, then extra time of 8 hours, 2 hours and 20 minutes."}
+              {describeSchedule(qpw).days}. {describeSchedule(qpw).window}, then extra time of {describeSchedule(qpw).extra}.
             </p>
           </div>
           <div className="field">
@@ -182,7 +180,11 @@ export function GroupSettings() {
                 </option>
               ))}
             </select>
-            <p className="small muted">Reminders reach each person in the evening of their own time zone.</p>
+            <p className="small muted">
+              {qpw <= 3
+                ? "Reminders reach each person at this time in their own time zone."
+                : "Reminders go out about 4 hours before each deadline."}
+            </p>
           </div>
           <button className="btn primary block" disabled={!dirty || !name.trim() || saving} onClick={save}>
             {saving ? "Saving…" : "Save changes"}

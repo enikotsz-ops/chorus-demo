@@ -2,7 +2,7 @@ import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Icon } from "../components/Icon";
 import { createGroup } from "../lib/api";
-import { browserTimezone, formatHour } from "../lib/time";
+import { browserTimezone, describeSchedule, formatHour } from "../lib/time";
 
 export function NewGroup() {
   const navigate = useNavigate();
@@ -49,17 +49,15 @@ export function NewGroup() {
         <div className="field">
           <label>Questions per week</label>
           <div className="segmented" role="group">
-            {[1, 2, 3].map((n) => (
+            {[1, 2, 3, 4, 5, 6, 7].map((n) => (
               <button key={n} aria-pressed={qpw === n} onClick={() => setQpw(n)}>
                 {n}
               </button>
             ))}
           </div>
           <p className="small muted">
-            {qpw === 1 && "A new question every Monday."}
-            {qpw === 2 && "New questions on Monday and Thursday."}
-            {qpw === 3 && "New questions on Monday, Wednesday and Friday."} They arrive at {formatHour(18)}. You can change
-            this later.
+            {describeSchedule(qpw).days}, at {formatHour(18)}. {describeSchedule(qpw).window}. You can change this
+            later.
           </p>
         </div>
       </div>
