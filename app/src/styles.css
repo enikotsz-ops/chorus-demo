@@ -845,3 +845,93 @@ textarea.input {
   display: inline-flex;
   flex: none;
 }
+
+.moods {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 8px;
+}
+
+.moods button {
+  min-height: 76px;
+  border-radius: 16px;
+  border: 2px solid transparent;
+  background: var(--paper);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.moods button[aria-pressed="true"] {
+  border-color: var(--ink);
+  background: var(--sand);
+}
+
+.mood-emoji {
+  font-size: 26px;
+  line-height: 1;
+}
+
+.toggle-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-height: var(--tap);
+  cursor: pointer;
+}
+
+.toggle-row input {
+  appearance: none;
+  width: 52px;
+  height: 32px;
+  border-radius: 16px;
+  background: var(--line);
+  position: relative;
+  flex: none;
+  cursor: pointer;
+  transition: background 0.15s;
+}
+
+.toggle-row input::after {
+  content: "";
+  position: absolute;
+  top: 3px;
+  left: 3px;
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  background: #fff;
+  box-shadow: 0 1px 3px rgba(27, 26, 23, 0.25);
+  transition: transform 0.15s;
+}
+
+.toggle-row input:checked {
+  background: var(--ink);
+}
+
+.toggle-row input:checked::after {
+  transform: translateX(20px);
+}
+
+.launch-card {
+  background: var(--ink);
+  color: #fff;
+}
+
+.launch-card .muted {
+  color: rgba(255, 255, 255, 0.7);
+}
+
+.launch-card .btn.primary {
+  background: var(--yellow);
+  color: var(--ink);
+}
+
+.launch-card .btn.ghost {
+  color: rgba(255, 255, 255, 0.85);
+}

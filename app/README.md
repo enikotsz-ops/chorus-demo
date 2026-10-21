@@ -79,6 +79,15 @@ select f.created_at, p.display_name, f.page, f.message
 from feedback f left join profiles p on p.id = f.user_id
 order by f.created_at desc;
 
+-- Feedback by moment and mood (1 = not great, 2 = OK, 3 = love it)
+select context, round(avg(rating), 2) as avg_mood, count(*) from feedback group by context;
+
+-- People who asked to hear about the launch, with when they agreed
+select u.email, p.display_name, p.launch_updates_at
+from profiles p join auth.users u on u.id = p.id
+where p.launch_updates
+order by p.launch_updates_at;
+
 -- £2 unlock interest: how many locked rounds, how many people tapped
 select count(distinct round_id) as rounds, count(*) as taps from unlock_interest;
 ```

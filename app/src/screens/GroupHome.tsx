@@ -1,13 +1,14 @@
 import { useCallback, useEffect, useState } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
 import { FeedbackSheet } from "../components/FeedbackSheet";
+import { LaunchUpdatesCard } from "../components/LaunchUpdates";
 import { Icon } from "../components/Icon";
 import { Avatar } from "../components/Avatar";
 import { CircleSwitcher, LAST_CIRCLE } from "../components/CircleSwitcher";
 import { MemberStatus } from "../components/MemberStatus";
 import { getGroup, getMembers, getRounds } from "../lib/api";
 import { useAuth, useUserId } from "../lib/auth";
-import { formatDate, isUrgent, timeLeft } from "../lib/time";
+import { isUrgent, timeLeft } from "../lib/time";
 import type { Member, Round } from "../lib/types";
 import { usePoll } from "../lib/usePoll";
 
@@ -163,18 +164,27 @@ export function GroupHome() {
         </>
       )}
 
-      <div className="spacer" />
-      <div className="row" style={{ justifyContent: "center", gap: 24 }}>
-        <Link to={`/g/${group.id}/archive`} className="btn ghost">
-          <Icon name="archive" /> Archive
-        </Link>
-        <button className="btn ghost" onClick={() => setFeedback(true)}>
-          <Icon name="chat" /> Feedback
+      {profile?.launch_updates === null && <LaunchUpdatesCard compact />}
+
+      <div className="card quiet">
+        <div className="row" style={{ alignItems: "flex-start" }}>
+          <span className="empty-icon" style={{ width: 44, height: 44, borderRadius: 14, flex: "none" }}>
+            <Icon name="chat" size={22} />
+          </span>
+          <div style={{ flex: 1 }}>
+            <h3>Chorus is in early testing</h3>
+            <p className="small muted">Anything confusing, broken or missing? Tell us. It takes ten seconds.</p>
+          </div>
+        </div>
+        <button className="btn secondary block" onClick={() => setFeedback(true)}>
+          Share feedback
         </button>
       </div>
-      <p className="small muted" style={{ textAlign: "center" }}>
-        Started {formatDate(rounds[rounds.length - 1]?.opens_at ?? new Date().toISOString())}
-      </p>
+
+      <div className="spacer" />
+      <Link to={`/g/${group.id}/archive`} className="btn ghost" style={{ alignSelf: "center" }}>
+        <Icon name="archive" /> Archive of past questions
+      </Link>
       <FeedbackSheet open={feedback} onClose={() => setFeedback(false)} />
     </div>
   );

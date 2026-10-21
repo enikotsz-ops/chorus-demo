@@ -5,7 +5,7 @@ import { Icon } from "../components/Icon";
 import { NotificationsCard } from "../components/NotificationsCard";
 import { Sheet } from "../components/Sheet";
 import { useToast } from "../components/Toast";
-import { deleteAccount, saveProfile } from "../lib/api";
+import { deleteAccount, saveProfile, setLaunchUpdates } from "../lib/api";
 import { useAuth } from "../lib/auth";
 import { supabase } from "../lib/supabase";
 
@@ -116,6 +116,27 @@ export function Settings() {
       </div>
 
       <NotificationsCard />
+
+      <div className="card">
+        <label className="toggle-row">
+          <span style={{ flex: 1 }}>
+            <span style={{ fontWeight: 600, display: "block" }}>Launch updates</span>
+            <span className="small muted">Email me when the full Chorus app launches.</span>
+          </span>
+          <input
+            type="checkbox"
+            checked={profile?.launch_updates === true}
+            onChange={async (e) => {
+              try {
+                await setLaunchUpdates(userId!, e.target.checked);
+                await refreshProfile();
+              } catch (err) {
+                toast((err as Error).message);
+              }
+            }}
+          />
+        </label>
+      </div>
 
       <div className="card quiet">
         <h3>Your recordings</h3>

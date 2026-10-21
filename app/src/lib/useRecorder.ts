@@ -142,9 +142,10 @@ export function useRecorder() {
   }, []);
 
   useEffect(() => {
-    // iOS stops recording when the app is backgrounded; finish cleanly.
+    // Phones stop the mic when the app is backgrounded; finish cleanly. On a
+    // laptop, switching tabs shouldn't end the recording.
     const onHide = () => {
-      if (document.visibilityState === "hidden" && rec.current?.state === "recording") {
+      if (navigator.maxTouchPoints > 0 && document.visibilityState === "hidden" && rec.current?.state === "recording") {
         setInterrupted(true);
         rec.current.stop();
       }

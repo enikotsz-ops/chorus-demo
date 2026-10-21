@@ -8,7 +8,16 @@ import { Icon } from "./Icon";
 const SPEEDS = [1, 1.5, 2];
 
 /** Plays an unlocked round's answers one at a time, or all in order. */
-export function AnswerPlayer({ round, members }: { round: Round; members: Member[] }) {
+export function AnswerPlayer({
+  round,
+  members,
+  onFinishedAll,
+}: {
+  round: Round;
+  members: Member[];
+  /** Called when "Play all" reaches the end */
+  onFinishedAll?: () => void;
+}) {
   const [current, setCurrent] = useState<number | null>(null);
   const [playing, setPlaying] = useState(false);
   const [loading, setLoading] = useState(false);
@@ -118,7 +127,10 @@ export function AnswerPlayer({ round, members }: { round: Round; members: Member
           setPlaying(false);
           setProgress(1);
           if (playAll.current && current !== null && current + 1 < round.answers.length) load(current + 1);
-          else playAll.current = false;
+          else {
+            if (playAll.current) onFinishedAll?.();
+            playAll.current = false;
+          }
         }}
       />
     </div>

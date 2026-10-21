@@ -1,4 +1,10 @@
-export type Profile = { id: string; display_name: string | null; timezone: string };
+export type Profile = {
+  id: string;
+  display_name: string | null;
+  timezone: string;
+  /** null until asked */
+  launch_updates: boolean | null;
+};
 
 export type Group = {
   id: string;

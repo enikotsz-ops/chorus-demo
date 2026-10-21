@@ -152,6 +152,26 @@ export async function deleteAccount(keepRecordings: boolean) {
   await supabase.auth.signOut({ scope: "local" }).catch(() => {});
 }
 
-export async function sendFeedback(userId: string, message: string, page: string) {
-  check(await supabase.from("feedback").insert({ user_id: userId, message, page }));
+export async function sendFeedback(
+  userId: string,
+  fields: { message?: string; rating?: number; context?: string; page: string },
+) {
+  check(
+    await supabase.from("feedback").insert({
+      user_id: userId,
+      message: fields.message || null,
+      rating: fields.rating ?? null,
+      context: fields.context ?? null,
+      page: fields.page,
+    }),
+  );
+}
+
+export async function setLaunchUpdates(userId: string, yes: boolean) {
+  check(
+    await supabase
+      .from("profiles")
+      .update({ launch_updates: yes, launch_updates_at: new Date().toISOString() })
+      .eq("id", userId),
+  );
 }

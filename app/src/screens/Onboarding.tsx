@@ -1,13 +1,14 @@
 import { useState } from "react";
+import { LaunchUpdatesCard } from "../components/LaunchUpdates";
 import { NotificationsCard } from "../components/NotificationsCard";
 import { saveProfile } from "../lib/api";
 import { useAuth } from "../lib/auth";
 import { browserTimezone } from "../lib/time";
 
-/** First run: what to call you, then reminders (with the iPhone install step). */
+/** First run: what to call you, launch updates, then reminders (with the iPhone install step). */
 export function Onboarding({ onDone }: { onDone: () => void }) {
   const { userId, profile, refreshProfile } = useAuth();
-  const [step, setStep] = useState(profile?.display_name ? 1 : 0);
+  const [step, setStep] = useState(!profile?.display_name ? 0 : profile.launch_updates === null ? 1 : 2);
   const [name, setName] = useState(profile?.display_name ?? "");
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -18,7 +19,7 @@ export function Onboarding({ onDone }: { onDone: () => void }) {
     try {
       await saveProfile(userId!, { display_name: name.trim(), timezone: browserTimezone() });
       await refreshProfile();
-      setStep(1);
+      setStep(profile?.launch_updates == null ? 1 : 2);
     } catch (e) {
       setError((e as Error).message);
     } finally {
@@ -31,6 +32,7 @@ export function Onboarding({ onDone }: { onDone: () => void }) {
       <div className="steps" aria-hidden="true">
         <span className={step === 0 ? "on" : ""} />
         <span className={step === 1 ? "on" : ""} />
+        <span className={step === 2 ? "on" : ""} />
       </div>
 
       {step === 0 ? (
@@ -54,6 +56,10 @@ export function Onboarding({ onDone }: { onDone: () => void }) {
             {busy ? "Saving…" : "Continue"}
           </button>
         </>
+      ) : step === 1 ? (
+        <div style={{ marginTop: 24 }}>
+          <LaunchUpdatesCard onDone={() => setStep(2)} />
+        </div>
       ) : (
         <>
           <div className="stack" style={{ gap: 16, marginTop: 24 }}>

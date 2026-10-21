@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { AnswerPlayer } from "../components/AnswerPlayer";
+import { FeedbackSheet } from "../components/FeedbackSheet";
 import { Icon } from "../components/Icon";
 import { MemberStatus } from "../components/MemberStatus";
 import { RecorderDock } from "../components/RecorderDock";
@@ -29,6 +30,18 @@ export function RoundScreen() {
   const [confirmShuffle, setConfirmShuffle] = useState(false);
   const [interest, setInterest] = useState(false);
   const [confirmDelete, setConfirmDelete] = useState(false);
+  const [ask, setAsk] = useState<{ context: string; title: string; prompt: string } | null>(null);
+
+  // Ask for feedback at a few key moments, once each per person.
+  const askOnce = (key: string, question: { context: string; title: string; prompt: string }) => {
+    try {
+      if (localStorage.getItem(key)) return;
+      localStorage.setItem(key, "1");
+    } catch {
+      return;
+    }
+    window.setTimeout(() => setAsk(question), 1200);
+  };
   const [deleting, setDeleting] = useState(false);
 
   const load = useCallback(async () => {
@@ -180,7 +193,30 @@ export function RoundScreen() {
       {round.status === "unlocked" && (
         <div className="stack">
           <span className="eyebrow">Everyone answered · listen in your own time</span>
-          <AnswerPlayer round={round} members={members} />
+          <AnswerPlayer
+            round={round}
+            members={members}
+            onFinishedAll={() =>
+              askOnce("chorus:asked-after-listen", {
+                context: "after-first-listen",
+                title: "How was hearing everyone?",
+                prompt: "This is the moment Chorus is built for. Did it land? Anything you'd change?",
+              })
+            }
+          />
+          <button
+            className="link-btn"
+            style={{ alignSelf: "center" }}
+            onClick={() =>
+              setAsk({
+                context: "round",
+                title: "How was this round?",
+                prompt: "The question, recording, waiting, listening: tell us what worked and what didn't.",
+              })
+            }
+          >
+            How was this round? Tell us
+          </button>
         </div>
       )}
 
@@ -222,10 +258,22 @@ export function RoundScreen() {
           onSubmitted={(unlocked) => {
             toast(unlocked ? "Everyone's answered. The round is unlocked!" : "Sent. Your answer is locked in.");
             refresh();
+            askOnce("chorus:asked-after-answer", {
+              context: "after-first-answer",
+              title: "How was recording your answer?",
+              prompt: "Was anything awkward about recording or sending it?",
+            });
           }}
         />
       )}
 
+      <FeedbackSheet
+        open={!!ask}
+        onClose={() => setAsk(null)}
+        context={ask?.context}
+        title={ask?.title}
+        prompt={ask?.prompt}
+      />
       <Confirm
         open={confirmDelete}
         title="Delete your answer?"
