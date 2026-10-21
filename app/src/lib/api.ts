@@ -212,6 +212,23 @@ export async function deleteComment(id: string) {
   check(await supabase.from("answer_comments").delete().eq("id", id));
 }
 
+export async function getMyQuestionVote(rid: string, userId: string): Promise<-1 | 1 | null> {
+  const row = check(
+    await supabase.from("question_votes").select("vote").eq("round_id", rid).eq("user_id", userId).maybeSingle(),
+  ) as { vote: -1 | 1 } | null;
+  return row?.vote ?? null;
+}
+
+/** vote = null removes it. */
+export async function setQuestionVote(rid: string, userId: string, questionId: number, vote: -1 | 1 | null) {
+  const table = supabase.from("question_votes");
+  check(
+    vote === null
+      ? await table.delete().eq("round_id", rid).eq("user_id", userId)
+      : await table.upsert({ round_id: rid, user_id: userId, question_id: questionId, vote }),
+  );
+}
+
 export async function sendFeedback(
   userId: string,
   fields: { message?: string; rating?: number; context?: string; page: string },

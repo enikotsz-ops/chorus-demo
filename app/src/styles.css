@@ -1091,3 +1091,29 @@ textarea.input {
   filter: grayscale(1);
   opacity: 0.6;
 }
+
+.question-vote {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  border-top: 1px solid var(--line);
+  padding-top: 12px;
+}
+
+.question-vote button {
+  width: 52px;
+  height: 44px;
+  border-radius: 14px;
+  border: 2px solid transparent;
+  background: var(--paper);
+  font-size: 20px;
+  cursor: pointer;
+  filter: grayscale(0.6);
+}
+
+.question-vote button[aria-pressed="true"] {
+  border-color: var(--ink);
+  background: var(--sand);
+  filter: none;
+}

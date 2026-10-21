@@ -4,6 +4,7 @@ import { AnswerPlayer } from "../components/AnswerPlayer";
 import { FeedbackSheet } from "../components/FeedbackSheet";
 import { Icon } from "../components/Icon";
 import { MemberStatus } from "../components/MemberStatus";
+import { QuestionVote } from "../components/QuestionVote";
 import { RecorderDock } from "../components/RecorderDock";
 import { Confirm } from "../components/Sheet";
 import { useToast } from "../components/Toast";
@@ -186,6 +187,9 @@ export function RoundScreen() {
           {round.question.text}
         </p>
         <MemberStatus round={round} members={members} me={me} />
+        {isParticipant && (myAnswer || round.status !== "open") && (
+          <QuestionVote key={round.question.id} roundId={round.id} questionId={round.question.id} userId={me} />
+        )}
         {canShuffle && (
           <button className="btn secondary" style={{ background: "var(--paper)" }} onClick={() => setConfirmShuffle(true)} disabled={shuffling}>
             <Icon name="shuffle" size={20} /> {shuffling ? "Finding one…" : "New question"}
