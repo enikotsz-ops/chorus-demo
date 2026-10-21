@@ -34,3 +34,14 @@ export const TIMEZONES: string[] = (() => {
   const intl = Intl as unknown as { supportedValuesOf?: (k: string) => string[] };
   return intl.supportedValuesOf?.("timeZone") ?? ["Europe/London", browserTimezone()];
 })();
+
+export function timeAgo(iso: string, now = Date.now()) {
+  const mins = Math.floor((now - new Date(iso).getTime()) / 60000);
+  if (mins < 1) return "just now";
+  if (mins < 60) return `${mins} min ago`;
+  const hours = Math.floor(mins / 60);
+  if (hours < 24) return `${hours} h ago`;
+  const days = Math.floor(hours / 24);
+  if (days < 7) return `${days} d ago`;
+  return formatDate(iso);
+}

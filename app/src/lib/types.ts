@@ -28,7 +28,15 @@ export type Answer = {
   mime_type: string;
   duration_ms: number;
   created_at: string;
+  reactions: Reaction[];
+  comments: Comment[];
 };
+
+export const REACTIONS = ["❤️", "😂", "🥹", "🙏", "👏", "😮"] as const;
+
+export type Reaction = { emoji: string; user_id: string };
+
+export type Comment = { id: string; user_id: string; body: string; created_at: string };
 
 export type Round = {
   id: string;

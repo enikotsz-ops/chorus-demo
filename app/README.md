@@ -24,6 +24,7 @@ The landing page at the repo root is separate and untouched.
 - After the third extension, the round stays locked for good. Locked rounds show a "would you pay £2 to unlock?" interest button; no payment is taken.
 - People who join mid-round are added to open rounds nobody has answered yet; otherwise they start with the next question.
 - Recordings are kept until the person deletes them. People can delete any of their answers; when deleting their account they choose to remove all recordings or leave them with their circles (credited by name).
+- Once a round unlocks, members can react to each voice answer with emojis and leave text comments in a thread under it. Comments notify the speaker and earlier commenters.
 - Push reminders: new question, evening reminder (at the group's release hour in each person's own time zone, during the last two days), each extension, unlock, and permanent lock.
 
 ## Setup

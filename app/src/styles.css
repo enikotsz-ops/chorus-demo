@@ -935,3 +935,159 @@ textarea.input {
 .launch-card .btn.ghost {
   color: rgba(255, 255, 255, 0.85);
 }
+
+/* ---------- Reactions & comments ---------- */
+
+.answer-block {
+  background: var(--paper);
+  border-radius: var(--radius);
+}
+
+.answer-block .player-item {
+  background: transparent;
+}
+
+.answer-block .player-item.active {
+  background: var(--sand);
+}
+
+.social {
+  padding: 0 10px 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.reaction-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.reaction-chip {
+  min-height: 36px;
+  min-width: 44px;
+  padding: 0 10px;
+  border-radius: 18px;
+  border: 1.5px solid var(--line);
+  background: #fff;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  font-size: 15px;
+  cursor: pointer;
+}
+
+.reaction-chip.mine {
+  border-color: var(--amber);
+  background: #fdf3d4;
+}
+
+.reaction-count {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--ink-2);
+}
+
+.reaction-chip.add,
+.reaction-chip.comment-toggle {
+  color: var(--muted);
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.reaction-chip.comment-toggle {
+  margin-left: auto;
+}
+
+.reaction-picker {
+  display: grid;
+  grid-template-columns: repeat(6, 1fr);
+  gap: 4px;
+  background: #fff;
+  border-radius: 16px;
+  padding: 6px;
+  box-shadow: 0 6px 20px -10px rgba(27, 26, 23, 0.35);
+}
+
+.reaction-picker button {
+  font-size: 24px;
+  min-height: 48px;
+  border: 0;
+  border-radius: 12px;
+  background: transparent;
+  cursor: pointer;
+}
+
+.reaction-picker button[aria-pressed="true"] {
+  background: #fdf3d4;
+}
+
+.thread {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding-top: 4px;
+}
+
+.comment {
+  display: flex;
+  gap: 10px;
+  align-items: flex-start;
+}
+
+.comment .avatar {
+  border: 0;
+  border-radius: 10px;
+}
+
+.comment-body {
+  flex: 1;
+  min-width: 0;
+  background: #fff;
+  border-radius: 4px 14px 14px 14px;
+  padding: 8px 12px;
+}
+
+.comment-meta {
+  font-size: 13px;
+}
+
+.comment-body p {
+  font-size: 15px;
+  overflow-wrap: anywhere;
+  white-space: pre-wrap;
+}
+
+.comment-delete {
+  width: 36px;
+  height: 36px;
+  border: 0;
+  background: transparent;
+  color: var(--muted-2);
+  cursor: pointer;
+  flex: none;
+}
+
+.comment-form {
+  display: flex;
+  gap: 8px;
+}
+
+.comment-form .input {
+  min-height: 46px;
+  font-size: 16px;
+}
+
+.comment-form .btn {
+  min-height: 46px;
+  padding: 0 16px;
+  font-size: 15px;
+}
+
+.add-emoji {
+  font-size: 17px;
+  filter: grayscale(1);
+  opacity: 0.6;
+}

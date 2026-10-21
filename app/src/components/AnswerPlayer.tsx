@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import { audioUrl } from "../lib/api";
 import { formatDuration } from "../lib/time";
 import type { Answer, Member, Round } from "../lib/types";
+import { AnswerSocial } from "./AnswerSocial";
 import { Avatar } from "./Avatar";
 import { Icon } from "./Icon";
 
@@ -11,10 +12,15 @@ const SPEEDS = [1, 1.5, 2];
 export function AnswerPlayer({
   round,
   members,
+  me,
+  onChanged,
   onFinishedAll,
 }: {
   round: Round;
   members: Member[];
+  me: string;
+  /** Called after a reaction or comment so the round reloads */
+  onChanged: () => void;
   /** Called when "Play all" reaches the end */
   onFinishedAll?: () => void;
 }) {
@@ -91,7 +97,8 @@ export function AnswerPlayer({
       </div>
 
       {round.answers.map((a, i) => (
-        <div className={`player-item ${current === i ? "active" : ""}`} key={a.id}>
+        <div className="answer-block" key={a.id}>
+        <div className={`player-item ${current === i ? "active" : ""}`}>
           <button className="play-btn" onClick={() => toggle(i)} aria-label={current === i && playing ? "Pause" : `Play ${nameOf(a)}`}>
             {current === i && loading ? "…" : <Icon name={current === i && playing ? "pause" : "play"} size={20} />}
           </button>
@@ -105,6 +112,8 @@ export function AnswerPlayer({
               <div style={{ width: `${current === i ? progress * 100 : 0}%` }} />
             </div>
           </div>
+        </div>
+        <AnswerSocial answer={a} members={members} me={me} onChanged={onChanged} />
         </div>
       ))}
 

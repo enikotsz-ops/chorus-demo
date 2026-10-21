@@ -196,6 +196,8 @@ export function RoundScreen() {
           <AnswerPlayer
             round={round}
             members={members}
+            me={me}
+            onChanged={refresh}
             onFinishedAll={() =>
               askOnce("chorus:asked-after-listen", {
                 context: "after-first-listen",

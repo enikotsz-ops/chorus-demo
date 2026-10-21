@@ -1,15 +1,22 @@
 import { supabase } from "./supabase";
 import type { Answer, Group, Member, Profile, Round } from "./types";
 
-type RawRound = Omit<Round, "participants" | "question"> & {
+type RawAnswer = Omit<Answer, "reactions" | "comments"> & {
+  answer_reactions: Answer["reactions"];
+  answer_comments: Answer["comments"];
+};
+
+type RawRound = Omit<Round, "participants" | "question" | "answers"> & {
   questions: Round["question"];
   round_participants: { user_id: string }[];
+  answers: RawAnswer[];
 };
 
 const ROUND_SELECT =
   "id, group_id, opens_at, base_deadline, deadline, extensions_used, status, unlocked_at, " +
   "questions(id, text, theme), round_participants(user_id), " +
-  "answers(id, user_id, speaker_name, storage_path, mime_type, duration_ms, created_at)";
+  "answers(id, user_id, speaker_name, storage_path, mime_type, duration_ms, created_at, " +
+  "answer_reactions(emoji, user_id), answer_comments(id, user_id, body, created_at))";
 
 function toRound(r: RawRound): Round {
   const { questions, round_participants, ...rest } = r;
@@ -17,7 +24,13 @@ function toRound(r: RawRound): Round {
     ...rest,
     question: questions,
     participants: round_participants.map((p) => p.user_id),
-    answers: [...r.answers].sort((a, b) => a.created_at.localeCompare(b.created_at)),
+    answers: r.answers
+      .map(({ answer_reactions, answer_comments, ...a }) => ({
+        ...a,
+        reactions: answer_reactions ?? [],
+        comments: [...(answer_comments ?? [])].sort((x, y) => x.created_at.localeCompare(y.created_at)),
+      }))
+      .sort((a, b) => a.created_at.localeCompare(b.created_at)),
   };
 }
 
@@ -150,6 +163,23 @@ export async function deleteAccount(keepRecordings: boolean) {
   }
   check(await supabase.rpc("delete_my_account", { keep_recordings: keepRecordings }));
   await supabase.auth.signOut({ scope: "local" }).catch(() => {});
+}
+
+export async function setReaction(answerId: string, userId: string, emoji: string, on: boolean) {
+  const table = supabase.from("answer_reactions");
+  const res = on
+    ? await table.insert({ answer_id: answerId, user_id: userId, emoji })
+    : await table.delete().eq("answer_id", answerId).eq("user_id", userId).eq("emoji", emoji);
+  // Already reacted (e.g. a double tap): nothing to do.
+  if (res.error && res.error.code !== "23505") throw new Error(res.error.message);
+}
+
+export async function addComment(answerId: string, userId: string, body: string) {
+  check(await supabase.from("answer_comments").insert({ answer_id: answerId, user_id: userId, body }));
+}
+
+export async function deleteComment(id: string) {
+  check(await supabase.from("answer_comments").delete().eq("id", id));
 }
 
 export async function sendFeedback(
