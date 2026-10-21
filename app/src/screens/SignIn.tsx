@@ -1,12 +1,45 @@
 import { useEffect, useState } from "react";
+import { isStandalone } from "../lib/push";
 import { supabase } from "../lib/supabase";
+
+const LAST_EMAIL = "chorus:email";
+const PENDING = "chorus:code-sent";
+const CODE_VALID_MS = 60 * 60 * 1000;
+
+// Remembers the email, and that a code was sent, so switching to the Mail app
+// (which can make iPhone close the Home Screen app) doesn't lose your place.
+function readPending(): { email: string; sentAt: number } | null {
+  try {
+    const p = JSON.parse(localStorage.getItem(PENDING) ?? "null");
+    return p && Date.now() - p.sentAt < CODE_VALID_MS ? p : null;
+  } catch {
+    return null;
+  }
+}
+
+function store(key: string, value: string | null) {
+  try {
+    if (value === null) localStorage.removeItem(key);
+    else localStorage.setItem(key, value);
+  } catch {
+    /* storage blocked */
+  }
+}
 
 /** Email sign-in. The email has a link and a code; the code matters on iPhone,
  * where a Home Screen app can't pick up a link opened in Safari. */
 export function SignIn() {
-  const [email, setEmail] = useState("");
+  const pending = readPending();
+  const [email, setEmail] = useState(() => {
+    try {
+      return pending?.email ?? localStorage.getItem(LAST_EMAIL) ?? "";
+    } catch {
+      return "";
+    }
+  });
   const [code, setCode] = useState("");
-  const [step, setStep] = useState<"email" | "code">("email");
+  const [step, setStep] = useState<"email" | "code">(pending ? "code" : "email");
+  const inApp = isStandalone();
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [cooldown, setCooldown] = useState(0);
@@ -29,6 +62,8 @@ export function SignIn() {
       setError(error.message);
       return;
     }
+    store(LAST_EMAIL, email.trim());
+    store(PENDING, JSON.stringify({ email: email.trim(), sentAt: Date.now() }));
     setStep("code");
     setCooldown(60);
   };
@@ -39,6 +74,7 @@ export function SignIn() {
     const { error } = await supabase.auth.verifyOtp({ email: email.trim(), token: code.trim(), type: "email" });
     setBusy(false);
     if (error) setError("That code didn't work. Check the latest email, or send a new one.");
+    else store(PENDING, null);
   };
 
   return (
@@ -98,9 +134,18 @@ export function SignIn() {
         >
           <h2>Check your email</h2>
           <p className="muted">
-            We sent a code to <b>{email}</b>. Enter it below, or tap the link in the email.
+            We sent a code to <b>{email}</b>.{" "}
+            {inApp ? "Open the email, copy the code and paste it here." : "Enter it below, or tap the link in the email."}
           </p>
+          {inApp && (
+            <div className="banner warn small">
+              <span>
+                Please <b>don't tap the link</b> in the email. On iPhone it opens Safari instead of this app.
+              </span>
+            </div>
+          )}
           <input
+            autoFocus
             className="input code-input"
             inputMode="numeric"
             autoComplete="one-time-code"
@@ -115,7 +160,15 @@ export function SignIn() {
             {busy ? "Checking…" : "Sign in"}
           </button>
           <div className="row" style={{ justifyContent: "space-between" }}>
-            <button type="button" className="link-btn" onClick={() => setStep("email")}>
+            <button
+              type="button"
+              className="link-btn"
+              onClick={() => {
+                store(PENDING, null);
+                setCode("");
+                setStep("email");
+              }}
+            >
               Use another email
             </button>
             <button type="button" className="link-btn" onClick={send} disabled={cooldown > 0 || busy}>
