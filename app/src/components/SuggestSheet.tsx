@@ -43,7 +43,8 @@ export function SuggestSheet({
     try {
       await suggestQuestion(groupId, text.trim());
       setText("");
-      toast("Added. It'll be one of the next questions.");
+      const ahead = queued?.length ?? 0;
+      toast(ahead === 0 ? "Queued as the next question." : `Queued. It's number ${ahead + 1} in line.`);
       load();
     } catch (e) {
       setError((e as Error).message);
@@ -67,8 +68,8 @@ export function SuggestSheet({
     <Sheet open={open} onClose={onClose}>
       <h3>Suggest a question</h3>
       <p className="muted small">
-        It goes to the front of the queue for this circle, shown as <b>"{profile?.display_name ?? "You"} asks"</b>. Personal
-        ones work well, like "What did you learn from me?"
+        It's queued as this circle's next question, shown as <b>"{profile?.display_name ?? "You"} asks"</b>. Personal ones
+        work well, like "What did you learn from me?"
       </p>
       <textarea
         className="input"

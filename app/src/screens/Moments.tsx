@@ -304,7 +304,7 @@ export function Moments() {
         <span className="grow">
           <b>Suggest a question</b>
           <span className="small muted" style={{ display: "block" }}>
-            Ask {circle.name} something, with your name on it.
+            Queued as the next question, with your name on it.
           </span>
         </span>
         <Icon name="chevron" />

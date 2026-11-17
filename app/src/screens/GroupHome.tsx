@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
 import { Avatar } from "../components/Avatar";
 import { FeedbackSheet } from "../components/FeedbackSheet";
@@ -7,10 +7,14 @@ import { LaunchUpdatesCard } from "../components/LaunchUpdates";
 import { MemberStatus } from "../components/MemberStatus";
 import { SuggestSheet } from "../components/SuggestSheet";
 import { buildActivity } from "../lib/activity";
+import { getPendingSuggestions } from "../lib/api";
 import { useAuth, useUserId } from "../lib/auth";
 import { rememberCircle, useCircles } from "../lib/circles";
 import { isUrgent, timeAgo, timeLeft } from "../lib/time";
-import { questionLabel, type Member, type Round } from "../lib/types";
+import { questionLabel, type Member, type Question, type Round } from "../lib/types";
+
+const releaseText = (d: Date) =>
+  `${d.toLocaleDateString(undefined, { weekday: "long" })} at ${d.toLocaleTimeString(undefined, { hour: "numeric", minute: "2-digit" })}`;
 
 export function deadlineLabel(r: Round) {
   if (r.extensions_used === 3) return `Last chance · ${timeLeft(r.deadline)}`;
@@ -51,11 +55,18 @@ export function GroupHome() {
   const { loading, circles, rounds: allRounds, members: allMembers, refresh } = useCircles();
   const [feedback, setFeedback] = useState(false);
   const [suggest, setSuggest] = useState(false);
+  const [pending, setPending] = useState<Question[]>([]);
+  const loadPending = useCallback(() => {
+    getPendingSuggestions(groupId)
+      .then(setPending)
+      .catch(() => {});
+  }, [groupId]);
 
   useEffect(() => {
     rememberCircle(groupId);
     refresh();
-  }, [groupId, refresh]);
+    loadPending();
+  }, [groupId, refresh, loadPending]);
 
   const circle = circles.find((c) => c.id === groupId);
   if (!circle) {
@@ -96,6 +107,7 @@ export function GroupHome() {
     );
   const activity = buildActivity(rounds, members, me);
   const nextRelease = circle.next_release_at ? new Date(circle.next_release_at) : null;
+  const upNext = pending[0];
 
   return (
     <div className="screen with-tabs">
@@ -118,6 +130,30 @@ export function GroupHome() {
         </div>
       )}
 
+      <button className="list-item suggest-top" onClick={() => setSuggest(true)}>
+        <span className="empty-icon" style={{ width: 40, height: 40, borderRadius: 12, flex: "none" }}>
+          <Icon name="plus" size={20} />
+        </span>
+        <span className="grow">
+          <b>Suggest a question</b>
+          <span className="small muted" style={{ display: "block" }}>
+            It's queued as the next question, with your name on it.
+          </span>
+        </span>
+        <Icon name="chevron" />
+      </button>
+
+      {upNext && (
+        <div className="card quiet next-up">
+          <span className="eyebrow">Next up{nextRelease ? ` · ${releaseText(nextRelease)}` : ""}</span>
+          <p className="question sm">{upNext.text}</p>
+          <span className="small muted">
+            {upNext.suggested_by_name} asks
+            {pending.length > 1 ? ` · ${pending.length - 1} more suggestion${pending.length > 2 ? "s" : ""} queued` : ""}
+          </span>
+        </div>
+      )}
+
       {open.length > 0 ? (
         open.map((r) => <OpenQuestion key={r.id} round={r} members={members} me={me} />)
       ) : (
@@ -128,25 +164,12 @@ export function GroupHome() {
           <h3>No open questions right now</h3>
           {nextRelease && (
             <p className="muted">
-              The next one arrives {nextRelease.toLocaleDateString(undefined, { weekday: "long" })} at{" "}
-              {nextRelease.toLocaleTimeString(undefined, { hour: "numeric", minute: "2-digit" })}.
+              The next one arrives {releaseText(nextRelease)}.
             </p>
           )}
         </div>
       )}
 
-      <button className="list-item" onClick={() => setSuggest(true)}>
-        <span className="empty-icon" style={{ width: 40, height: 40, borderRadius: 12, flex: "none" }}>
-          <Icon name="question" size={20} />
-        </span>
-        <span className="grow">
-          <b>Suggest a question</b>
-          <span className="small muted" style={{ display: "block" }}>
-            It goes to the front of the queue, with your name on it.
-          </span>
-        </span>
-        <Icon name="chevron" />
-      </button>
 
       <span className="eyebrow">Activity</span>
       {activity.length === 0 ? (
@@ -184,7 +207,15 @@ export function GroupHome() {
       </div>
 
       <FeedbackSheet open={feedback} onClose={() => setFeedback(false)} />
-      <SuggestSheet open={suggest} onClose={() => setSuggest(false)} groupId={circle.id} isAdmin={circle.role === "admin"} />
+      <SuggestSheet
+        open={suggest}
+        onClose={() => {
+          setSuggest(false);
+          loadPending();
+        }}
+        groupId={circle.id}
+        isAdmin={circle.role === "admin"}
+      />
     </div>
   );
 }
