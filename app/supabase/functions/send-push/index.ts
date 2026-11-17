@@ -7,6 +7,10 @@ import webpush from "npm:web-push@3.6.7";
 
 const json = (body: unknown, status = 200) => Response.json(body, { status });
 
+// Anything older than this is out of date ("new question", "1 hour left"...)
+// and is marked done without being sent, e.g. after downtime.
+const STALE_AFTER_MS = 60 * 60 * 1000;
+
 // Short fingerprint so mismatched secrets can be compared without revealing them.
 async function fingerprint(value: string) {
   const hash = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(value));
@@ -57,14 +61,25 @@ Deno.serve(async (req) => {
 
     const { data: pending, error } = await supabase
       .from("notifications")
-      .select("id, user_id, title, body, url")
+      .select("id, user_id, title, body, url, created_at")
       .is("sent_at", null)
       .order("created_at")
       .limit(200);
     if (error) return json({ error: "reading notifications failed", detail: error.message }, 500);
     if (!pending?.length) return json({ sent: 0 });
 
-    const userIds = [...new Set(pending.map((n) => n.user_id))];
+    const cutoff = Date.now() - STALE_AFTER_MS;
+    const stale = pending.filter((n) => new Date(n.created_at).getTime() < cutoff);
+    if (stale.length) {
+      await supabase
+        .from("notifications")
+        .update({ sent_at: new Date().toISOString() })
+        .in("id", stale.map((n) => n.id));
+    }
+    const fresh = pending.filter((n) => new Date(n.created_at).getTime() >= cutoff);
+    if (!fresh.length) return json({ sent: 0, skipped_stale: stale.length });
+
+    const userIds = [...new Set(fresh.map((n) => n.user_id))];
     const { data: subs, error: subsError } = await supabase
       .from("push_subscriptions")
       .select("endpoint, user_id, p256dh, auth")
@@ -74,7 +89,7 @@ Deno.serve(async (req) => {
     let sent = 0;
     const failures: string[] = [];
     const gone: string[] = [];
-    for (const n of pending) {
+    for (const n of fresh) {
       const payload = JSON.stringify({ title: n.title, body: n.body, url: n.url });
       for (const s of (subs ?? []).filter((s) => s.user_id === n.user_id)) {
         try {
@@ -96,12 +111,13 @@ Deno.serve(async (req) => {
     await supabase
       .from("notifications")
       .update({ sent_at: new Date().toISOString() })
-      .in("id", pending.map((n) => n.id));
+      .in("id", fresh.map((n) => n.id));
     if (gone.length) {
       await supabase.from("push_subscriptions").delete().in("endpoint", gone);
     }
     return json({
-      notifications: pending.length,
+      notifications: fresh.length,
+      skipped_stale: stale.length,
       subscriptions: subs?.length ?? 0,
       sent,
       removed: gone.length,
