@@ -35,7 +35,7 @@ The landing page at the repo root is separate and untouched.
 - Members can suggest questions for their circle. There's no approval step: suggestions are asked next, oldest first, shown as "<name> asks", and only that circle sees them.
 - Moments: a timeline of a circle's unlocked voices, filterable by person, with "play all"; people also see their own still-locked answers.
 - Play: game ideas with an "I'd play this" vote (`game_interest`).
-- Email reminders: people with no push-enabled device get the important ones (new question, deadline reminder, last chance, unlocked) by email through Resend, unless they switch it off in Settings. Needs the `RESEND_API_KEY` function secret; optional `EMAIL_FROM` and `APP_URL`.
+- Email reminders: people whose push didn't reach any device get the important ones (new question, deadline reminder, last chance, unlocked) by email through Resend, unless they switch it off in Settings. Needs the `RESEND_API_KEY` function secret; optional `EMAIL_FROM` and `APP_URL`.
 - Push reminders: new question, evening reminder (up to 3 a week: at the release hour in each person's own time zone, during the last two days; 4 or more a week: about 4 hours before the deadline), each extension, unlock, and permanent lock.
 
 ## Setup
@@ -107,6 +107,11 @@ select q.theme, q.text,
   count(*) as votes
 from question_votes v join questions q on q.id = v.question_id
 group by q.id order by (count(*) filter (where v.vote = 1) - count(*) filter (where v.vote = -1)) desc;
+
+-- Reminder emails: what happened to each one (sent, failed + reason, has_push, email_off, no_api_key)
+select n.created_at, p.display_name, left(n.body, 50) as message, n.email_status, n.email_error
+from notifications n join profiles p on p.id = n.user_id
+where n.email order by n.created_at desc limit 50;
 
 -- Which games people would play
 select game, count(*) from game_interest group by game order by count(*) desc;

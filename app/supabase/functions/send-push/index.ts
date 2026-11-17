@@ -73,6 +73,8 @@ Deno.serve(async (req) => {
     vapidSubject: Deno.env.get("VAPID_SUBJECT")?.trim() || "mailto:hello@getchorus.org",
     // Optional: without it, email reminders are simply skipped.
     resendKey: Deno.env.get("RESEND_API_KEY")?.trim(),
+    // Only overridden for local testing.
+    resendUrl: Deno.env.get("RESEND_API_URL")?.trim() || "https://api.resend.com/emails",
     emailFrom: Deno.env.get("EMAIL_FROM")?.trim() || "Chorus <hello@getchorus.org>",
     appUrl: (Deno.env.get("APP_URL")?.trim() || "https://chorus-demo.vercel.app").replace(/\/$/, ""),
   };
@@ -123,6 +125,8 @@ Deno.serve(async (req) => {
     let sent = 0;
     const failures: string[] = [];
     const gone: string[] = [];
+    // Notifications that reached at least one device; the rest can fall back to email.
+    const pushed = new Set<number>();
     for (const n of fresh) {
       const payload = JSON.stringify({ title: n.title, body: n.body, url: n.url });
       for (const s of (subs ?? []).filter((s) => s.user_id === n.user_id)) {
@@ -133,6 +137,7 @@ Deno.serve(async (req) => {
             { TTL: 60 * 60 }, // phones offline longer than this get nothing rather than old news
           );
           sent++;
+          pushed.add(n.id);
         } catch (e) {
           // 404/410 mean the browser dropped the subscription.
           const status = (e as { statusCode?: number }).statusCode;
@@ -142,12 +147,18 @@ Deno.serve(async (req) => {
       }
     }
 
-    // Email the important ones to people with no working push device.
+    // Email the important ones that no push reached, and
+    // record the outcome on each notification (email_status / email_error).
     let emailed = 0;
     const emailFailures: string[] = [];
-    const withPush = new Set((subs ?? []).filter((s) => !gone.includes(s.endpoint)).map((s) => s.user_id));
-    const toEmail = fresh.filter((n) => n.email && !withPush.has(n.user_id));
-    if (toEmail.length && env.resendKey) {
+    const outcomes = new Map<number, { email_status: string; email_error?: string; emailed_at?: string }>();
+    const emailable = fresh.filter((n) => n.email);
+    for (const n of emailable) if (pushed.has(n.id)) outcomes.set(n.id, { email_status: "has_push" });
+    const toEmail = emailable.filter((n) => !pushed.has(n.id));
+
+    if (toEmail.length && !env.resendKey) {
+      for (const n of toEmail) outcomes.set(n.id, { email_status: "no_api_key" });
+    } else if (toEmail.length) {
       const { data: people, error: peopleError } = await supabase.rpc("notification_recipients", {
         user_ids: [...new Set(toEmail.map((n) => n.user_id))],
       });
@@ -155,21 +166,47 @@ Deno.serve(async (req) => {
       const byId = new Map(((people ?? []) as Recipient[]).map((p) => [p.id, p]));
       for (const n of toEmail) {
         const person = byId.get(n.user_id);
-        if (!person?.email || !person.email_reminders) continue;
-        const res = await fetch("https://api.resend.com/emails", {
-          method: "POST",
-          headers: { Authorization: `Bearer ${env.resendKey}`, "Content-Type": "application/json" },
-          body: JSON.stringify({
-            from: env.emailFrom,
-            to: person.email,
-            subject: `${n.title}: ${n.body}`.slice(0, 140),
-            html: emailHtml(n, person.display_name, env.appUrl),
-            text: emailText(n, env.appUrl),
-          }),
-        });
-        if (res.ok) emailed++;
-        else emailFailures.push(`${res.status}: ${(await res.text()).slice(0, 150)}`);
+        if (!person) {
+          outcomes.set(n.id, { email_status: "failed", email_error: peopleError?.message ?? "recipient not found" });
+          continue;
+        }
+        if (!person.email_reminders) {
+          outcomes.set(n.id, { email_status: "email_off" });
+          continue;
+        }
+        if (!person.email) {
+          outcomes.set(n.id, { email_status: "no_address" });
+          continue;
+        }
+        try {
+          const res = await fetch(env.resendUrl, {
+            method: "POST",
+            headers: { Authorization: `Bearer ${env.resendKey}`, "Content-Type": "application/json" },
+            body: JSON.stringify({
+              from: env.emailFrom,
+              to: person.email,
+              subject: `${n.title}: ${n.body}`.slice(0, 140),
+              html: emailHtml(n, person.display_name, env.appUrl),
+              text: emailText(n, env.appUrl),
+            }),
+          });
+          if (res.ok) {
+            emailed++;
+            outcomes.set(n.id, { email_status: "sent", emailed_at: new Date().toISOString() });
+          } else {
+            const detail = `${res.status}: ${(await res.text()).slice(0, 300)}`;
+            emailFailures.push(detail.slice(0, 150));
+            outcomes.set(n.id, { email_status: "failed", email_error: detail });
+          }
+        } catch (e) {
+          const detail = (e as Error).message.slice(0, 300);
+          emailFailures.push(detail);
+          outcomes.set(n.id, { email_status: "failed", email_error: detail });
+        }
       }
+    }
+    for (const [id, outcome] of outcomes) {
+      await supabase.from("notifications").update(outcome).eq("id", id);
     }
 
     await supabase
