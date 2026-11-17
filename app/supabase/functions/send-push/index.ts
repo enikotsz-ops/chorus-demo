@@ -96,7 +96,7 @@ Deno.serve(async (req) => {
           await webpush.sendNotification(
             { endpoint: s.endpoint, keys: { p256dh: s.p256dh, auth: s.auth } },
             payload,
-            { TTL: 60 * 60 * 24 },
+            { TTL: 60 * 60 }, // phones offline longer than this get nothing rather than old news
           );
           sent++;
         } catch (e) {
