@@ -49,7 +49,7 @@ export function InstallGuide() {
             </li>
             <li>Open Chorus from your Home Screen and sign in with the code from your email</li>
             <li>
-              Go to <b>Settings</b> and tap <b>Turn on reminders</b>, then <b>Allow</b>
+              Tap <b>You</b> at the bottom, then <b>Turn on reminders</b> and <b>Allow</b>
             </li>
           </ol>
         </div>
@@ -69,7 +69,7 @@ export function InstallGuide() {
               Tap <b>Add to Home screen</b> or <b>Install app</b>, then confirm
             </li>
             <li>
-              Open Chorus from your Home Screen and turn on reminders in <b>Settings</b>
+              Open Chorus from your Home Screen, tap <b>You</b> and turn on reminders
             </li>
           </ol>
         </div>

@@ -19,6 +19,7 @@ import {
 } from "../lib/api";
 import { useUserId } from "../lib/auth";
 import { formatDate, isUrgent } from "../lib/time";
+import { questionLabel } from "../lib/types";
 import { usePoll } from "../lib/usePoll";
 import { deadlineLabel } from "./GroupHome";
 
@@ -174,7 +175,7 @@ export function RoundScreen() {
 
       <div className="card" style={questionChanged ? { outline: "3px solid var(--amber)" } : undefined}>
         <div className="card-meta">
-          <span className="pill">{round.question.theme}</span>
+          <span className="pill">{questionLabel(round.question)}</span>
           {round.status === "open" ? (
             <span className={`deadline ${isUrgent(round.deadline) || round.extensions_used ? "urgent" : ""}`}>
               {deadlineLabel(round)}

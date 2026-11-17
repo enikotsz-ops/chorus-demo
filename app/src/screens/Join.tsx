@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { groupPreview, joinGroup } from "../lib/api";
 import { useAuth } from "../lib/auth";
+import { useCircles } from "../lib/circles";
 
 export const PENDING_INVITE = "chorus:invite";
 
@@ -10,6 +11,7 @@ export function Join() {
   const { code = "" } = useParams();
   const { userId } = useAuth();
   const navigate = useNavigate();
+  const { refresh } = useCircles();
   const [preview, setPreview] = useState<{ name: string; member_count: number } | null | undefined>(undefined);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -31,6 +33,7 @@ export function Join() {
     try {
       const gid = await joinGroup(code);
       localStorage.removeItem(PENDING_INVITE);
+      await refresh();
       navigate(`/g/${gid}`, { replace: true });
     } catch (e) {
       setError((e as Error).message);

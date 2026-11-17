@@ -48,6 +48,31 @@ const paths: Record<string, JSX.Element> = {
   question: <path d="M9 9a3 3 0 1 1 4 2.8c-.7.3-1 1-1 1.7V14M12 18v.5" />,
   trash: <path d="M5 7h14M10 7V4h4v3M7 7l1 13h8l1-13" />,
   redo: <path d="M4 12a8 8 0 1 0 2.4-5.7M4 4v4h4" />,
+  circles: (
+    <>
+      <circle cx="9" cy="9" r="5" />
+      <circle cx="15" cy="15" r="5" />
+    </>
+  ),
+  moments: (
+    <>
+      <path d="M4 6h16M4 12h10M4 18h13" />
+      <circle cx="19" cy="12" r="2" />
+    </>
+  ),
+  game: (
+    <>
+      <rect x="3" y="7" width="18" height="11" rx="5" />
+      <path d="M8 11v3M6.5 12.5h3M15.5 12h.01M17.5 14h.01" />
+    </>
+  ),
+  user: (
+    <>
+      <circle cx="12" cy="8" r="4" />
+      <path d="M4 21a8 8 0 0 1 16 0" />
+    </>
+  ),
+  close: <path d="M6 6l12 12M18 6L6 18" />,
 };
 
 export type IconName = keyof typeof paths;

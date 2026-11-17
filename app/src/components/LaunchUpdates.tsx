@@ -30,7 +30,7 @@ export function LaunchUpdatesCard({ onDone, compact = false }: { onDone?: () => 
         This is an early version, and you're helping shape it. Want us to email you when the full Chorus app launches?
       </p>
       <p className="small muted">
-        We'll only email <b>{session?.user.email}</b> about the launch, and you can change your mind any time in Settings.
+        We'll only email <b>{session?.user.email}</b> about the launch, and you can change your mind any time under You.
       </p>
       {error && <p className="error-text">{error}</p>}
       <button className="btn primary block" onClick={() => answer(true)} disabled={busy}>

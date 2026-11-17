@@ -17,7 +17,10 @@ export type Group = {
   timezone: string;
   invite_code: string;
   next_release_at: string | null;
+  circle_type?: CircleType;
 };
+
+export type CircleType = "family" | "friends";
 
 export type Member = { user_id: string; role: "admin" | "member"; profile?: Profile };
 
@@ -36,7 +39,7 @@ export type Answer = {
 
 export const REACTIONS = ["❤️", "😂", "🥹", "🙏", "👏", "😮"] as const;
 
-export type Reaction = { emoji: string; user_id: string };
+export type Reaction = { emoji: string; user_id: string; created_at?: string };
 
 export type Comment = { id: string; user_id: string; body: string; created_at: string };
 
@@ -49,7 +52,19 @@ export type Round = {
   extensions_used: number;
   status: "open" | "unlocked" | "expired";
   unlocked_at: string | null;
-  question: { id: number; text: string; theme: string };
+  question: Question;
   participants: string[];
   answers: Answer[];
 };
+
+export type Question = {
+  id: number;
+  text: string;
+  theme: string;
+  /** Set when a circle member suggested it */
+  suggested_by?: string | null;
+  suggested_by_name?: string | null;
+};
+
+/** Label shown on the question pill: the theme, or who suggested it. */
+export const questionLabel = (q: Question) => (q.suggested_by_name ? `${q.suggested_by_name} asks` : q.theme);

@@ -1,13 +1,15 @@
 import { useCallback, useEffect, useState } from "react";
 import { useNavigate, useParams, useSearchParams } from "react-router-dom";
 import { Avatar } from "../components/Avatar";
+import { CircleTypePicker } from "../components/CircleTypePicker";
 import { Icon } from "../components/Icon";
 import { Confirm } from "../components/Sheet";
 import { useToast } from "../components/Toast";
 import { getGroup, getMembers, leaveGroup, removeMember, updateGroupSettings } from "../lib/api";
 import { useUserId } from "../lib/auth";
+import { useCircles } from "../lib/circles";
 import { TIMEZONES, describeSchedule, formatHour } from "../lib/time";
-import type { Member } from "../lib/types";
+import type { CircleType, Member } from "../lib/types";
 import { usePoll } from "../lib/usePoll";
 
 export function GroupSettings() {
@@ -16,6 +18,7 @@ export function GroupSettings() {
   const me = useUserId();
   const navigate = useNavigate();
   const toast = useToast();
+  const circles = useCircles();
   const load = useCallback(() => Promise.all([getGroup(groupId), getMembers(groupId)]), [groupId]);
   const { data, refresh } = usePoll(load, 30000);
 
@@ -23,6 +26,7 @@ export function GroupSettings() {
   const [qpw, setQpw] = useState(1);
   const [hour, setHour] = useState(18);
   const [tz, setTz] = useState("Europe/London");
+  const [type, setType] = useState<CircleType>("family");
   const [saving, setSaving] = useState(false);
   const [removing, setRemoving] = useState<Member | null>(null);
   const [leaving, setLeaving] = useState(false);
@@ -37,6 +41,7 @@ export function GroupSettings() {
     setQpw(group.questions_per_week);
     setHour(group.release_hour);
     setTz(group.timezone);
+    setType(group.circle_type ?? "family");
   }, [group?.id]);
 
   if (!group) {
@@ -48,7 +53,8 @@ export function GroupSettings() {
   }
 
   const inviteUrl = `${window.location.origin}/join/${group.invite_code}`;
-  const dirty = name !== group.name || qpw !== group.questions_per_week || hour !== group.release_hour || tz !== group.timezone;
+  const dirty = name !== group.name || qpw !== group.questions_per_week || hour !== group.release_hour || tz !== group.timezone ||
+    type !== (group.circle_type ?? "family");
 
   const share = async () => {
     const text = `Join ${group.name} on Chorus. Each week we answer one question by voice, and hear each other once everyone has answered.`;
@@ -66,8 +72,9 @@ export function GroupSettings() {
   const save = async () => {
     setSaving(true);
     try {
-      await updateGroupSettings(group.id, name.trim(), qpw, hour, tz);
+      await updateGroupSettings(group.id, name.trim(), qpw, hour, tz, type);
       await refresh();
+      circles.refresh();
       toast("Saved. Changes apply from the next question.");
     } catch (e) {
       toast((e as Error).message);
@@ -91,6 +98,7 @@ export function GroupSettings() {
     setLeaving(false);
     try {
       await leaveGroup(group.id);
+      await circles.refresh();
       navigate("/", { replace: true });
     } catch (e) {
       toast((e as Error).message);
@@ -147,6 +155,10 @@ export function GroupSettings() {
           <div className="field">
             <label htmlFor="gname">Circle name</label>
             <input id="gname" className="input" value={name} maxLength={60} onChange={(e) => setName(e.target.value)} />
+          </div>
+          <div className="field">
+            <label>Who is this circle for?</label>
+            <CircleTypePicker value={type} onChange={setType} />
           </div>
           <div className="field">
             <label>Questions per week</label>

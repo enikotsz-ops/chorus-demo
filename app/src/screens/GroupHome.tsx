@@ -1,16 +1,16 @@
-import { useCallback, useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
-import { FeedbackSheet } from "../components/FeedbackSheet";
-import { LaunchUpdatesCard } from "../components/LaunchUpdates";
-import { Icon } from "../components/Icon";
 import { Avatar } from "../components/Avatar";
-import { CircleSwitcher, LAST_CIRCLE } from "../components/CircleSwitcher";
+import { FeedbackSheet } from "../components/FeedbackSheet";
+import { Icon } from "../components/Icon";
+import { LaunchUpdatesCard } from "../components/LaunchUpdates";
 import { MemberStatus } from "../components/MemberStatus";
-import { getGroup, getMembers, getRounds } from "../lib/api";
+import { SuggestSheet } from "../components/SuggestSheet";
+import { buildActivity } from "../lib/activity";
 import { useAuth, useUserId } from "../lib/auth";
-import { isUrgent, timeLeft } from "../lib/time";
-import type { Member, Round } from "../lib/types";
-import { usePoll } from "../lib/usePoll";
+import { rememberCircle, useCircles } from "../lib/circles";
+import { isUrgent, timeAgo, timeLeft } from "../lib/time";
+import { questionLabel, type Member, type Round } from "../lib/types";
 
 export function deadlineLabel(r: Round) {
   if (r.extensions_used === 3) return `Last chance · ${timeLeft(r.deadline)}`;
@@ -18,62 +18,57 @@ export function deadlineLabel(r: Round) {
   return timeLeft(r.deadline);
 }
 
-function RoundCard({ round, members, me }: { round: Round; members: Member[]; me: string }) {
+function OpenQuestion({ round, members, me }: { round: Round; members: Member[]; me: string }) {
   const navigate = useNavigate();
-  const needsMe =
-    round.status === "open" && round.participants.includes(me) && !round.answers.some((a) => a.user_id === me);
+  const needsMe = round.participants.includes(me) && !round.answers.some((a) => a.user_id === me);
   return (
     <button className="card tappable" onClick={() => navigate(`/r/${round.id}`)}>
       <div className="card-meta">
-        <span className="eyebrow">{round.question.theme}</span>
-        {round.status === "open" ? (
-          <span className={`deadline ${isUrgent(round.deadline) || round.extensions_used ? "urgent" : ""}`}>
-            {deadlineLabel(round)}
-          </span>
-        ) : (
-          <span className="deadline">{round.status === "unlocked" ? "Unlocked" : "Stayed locked"}</span>
-        )}
+        <span className="pill">{questionLabel(round.question)}</span>
+        <span className={`deadline ${isUrgent(round.deadline) || round.extensions_used ? "urgent" : ""}`}>
+          {deadlineLabel(round)}
+        </span>
       </div>
       <p className="question sm">{round.question.text}</p>
       <MemberStatus round={round} members={members} me={me} expandable={false} />
-      {needsMe && (
+      {needsMe ? (
         <span className="btn yellow block" role="presentation">
           <Icon name="mic" /> Record your answer
         </span>
-      )}
-      {round.status === "unlocked" && (
-        <span className="btn primary block" role="presentation">
-          <Icon name="play" /> Listen
-        </span>
+      ) : (
+        <span className="small muted">Your answer is locked in. We'll let you know when it unlocks.</span>
       )}
     </button>
   );
 }
 
+/** One circle: its open question(s), then everything that's happened lately. */
 export function GroupHome() {
   const { groupId = "" } = useParams();
   const me = useUserId();
   const { profile } = useAuth();
   const navigate = useNavigate();
+  const { loading, circles, rounds: allRounds, members: allMembers, refresh } = useCircles();
   const [feedback, setFeedback] = useState(false);
+  const [suggest, setSuggest] = useState(false);
 
-  // Reopen the app in the circle you used last.
   useEffect(() => {
-    try {
-      localStorage.setItem(LAST_CIRCLE, groupId);
-    } catch {
-      /* storage blocked */
-    }
-  }, [groupId]);
-  const load = useCallback(
-    () => Promise.all([getGroup(groupId), getMembers(groupId), getRounds(groupId)]),
-    [groupId],
-  );
-  const { data, error, refresh } = usePoll(load);
+    rememberCircle(groupId);
+    refresh();
+  }, [groupId, refresh]);
 
-  if (error && !data) {
+  const circle = circles.find((c) => c.id === groupId);
+  if (!circle) {
+    if (loading) {
+      return (
+        <div className="screen with-tabs">
+          <div className="skeleton" style={{ height: 52 }} />
+          <div className="skeleton" style={{ height: 280 }} />
+        </div>
+      );
+    }
     return (
-      <div className="screen" style={{ justifyContent: "center" }}>
+      <div className="screen with-tabs" style={{ justifyContent: "center" }}>
         <div className="card empty">
           <h2>Couldn't load this circle</h2>
           <p className="muted">Check your connection. If you were removed from the circle, it won't be available any more.</p>
@@ -88,17 +83,8 @@ export function GroupHome() {
     );
   }
 
-  if (!data) {
-    return (
-      <div className="screen">
-        <div className="skeleton" style={{ height: 52 }} />
-        <div className="skeleton" style={{ height: 280 }} />
-        <div className="skeleton" style={{ height: 120 }} />
-      </div>
-    );
-  }
-
-  const [group, members, rounds] = data;
+  const rounds = allRounds.filter((r) => r.group_id === groupId);
+  const members = allMembers.filter((m) => m.group_id === groupId);
   const answeredByMe = (r: Round) => r.answers.some((a) => a.user_id === me);
   const open = rounds
     .filter((r) => r.status === "open")
@@ -108,18 +94,17 @@ export function GroupHome() {
         Number(answeredByMe(a) || !a.participants.includes(me)) - Number(answeredByMe(b) || !b.participants.includes(me)) ||
         a.deadline.localeCompare(b.deadline),
     );
-  const twoWeeksAgo = Date.now() - 14 * 86400000;
-  const recent = rounds.filter((r) => r.status === "unlocked" && new Date(r.unlocked_at!).getTime() > twoWeeksAgo);
-  const nextRelease = group.next_release_at ? new Date(group.next_release_at) : null;
+  const activity = buildActivity(rounds, members, me);
+  const nextRelease = circle.next_release_at ? new Date(circle.next_release_at) : null;
 
   return (
-    <div className="screen">
+    <div className="screen with-tabs">
       <div className="topbar">
-        <Link to="/settings" aria-label="Your settings" style={{ textDecoration: "none" }}>
-          <Avatar id={me} name={profile?.display_name} size={44} />
-        </Link>
-        <CircleSwitcher current={group} />
-        <Link to={`/g/${group.id}/settings`} className="icon-btn" aria-label="Circle settings">
+        <button className="icon-btn" aria-label="Your circles" onClick={() => navigate("/")}>
+          <Icon name="back" />
+        </button>
+        <span className="topbar-title">{circle.name}</span>
+        <Link to={`/g/${circle.id}/settings`} className="icon-btn" aria-label="Circle settings">
           <Icon name="settings" />
         </Link>
       </div>
@@ -127,19 +112,14 @@ export function GroupHome() {
       {members.length < 2 && (
         <div className="banner">
           <span style={{ flex: 1 }}>Chorus needs at least two voices. Invite someone so your first round can unlock.</span>
-          <Link className="link-btn" to={`/g/${group.id}/settings?invite=1`}>
+          <Link className="link-btn" to={`/g/${circle.id}/settings?invite=1`}>
             Invite
           </Link>
         </div>
       )}
 
       {open.length > 0 ? (
-        <>
-          <span className="eyebrow">{open.length > 1 ? "Open questions" : "This week"}</span>
-          {open.map((r) => (
-            <RoundCard key={r.id} round={r} members={members} me={me} />
-          ))}
-        </>
+        open.map((r) => <OpenQuestion key={r.id} round={r} members={members} me={me} />)
       ) : (
         <div className="card empty">
           <span className="empty-icon">
@@ -155,13 +135,35 @@ export function GroupHome() {
         </div>
       )}
 
-      {recent.length > 0 && (
-        <>
-          <span className="eyebrow">Recently unlocked</span>
-          {recent.map((r) => (
-            <RoundCard key={r.id} round={r} members={members} me={me} />
+      <button className="list-item" onClick={() => setSuggest(true)}>
+        <span className="empty-icon" style={{ width: 40, height: 40, borderRadius: 12, flex: "none" }}>
+          <Icon name="question" size={20} />
+        </span>
+        <span className="grow">
+          <b>Suggest a question</b>
+          <span className="small muted" style={{ display: "block" }}>
+            It goes to the front of the queue, with your name on it.
+          </span>
+        </span>
+        <Icon name="chevron" />
+      </button>
+
+      <span className="eyebrow">Activity</span>
+      {activity.length === 0 ? (
+        <p className="small muted">Nothing yet. Answers, unlocks, reactions and comments will show up here.</p>
+      ) : (
+        <div className="card activity">
+          {activity.map((a) => (
+            <button key={a.key} className="act" onClick={() => navigate(`/r/${a.roundId}`)}>
+              {a.who ? <Avatar id={a.who} name={a.name === "You" ? profile?.display_name : a.name} size={36} /> : <span className="act-icon">{a.icon}</span>}
+              <span className="act-text">
+                {a.name && <b>{a.name} </b>}
+                {a.text}
+                <span className="act-when">{timeAgo(a.at)}</span>
+              </span>
+            </button>
           ))}
-        </>
+        </div>
       )}
 
       {profile?.launch_updates === null && <LaunchUpdatesCard compact />}
@@ -181,11 +183,8 @@ export function GroupHome() {
         </button>
       </div>
 
-      <div className="spacer" />
-      <Link to={`/g/${group.id}/archive`} className="btn ghost" style={{ alignSelf: "center" }}>
-        <Icon name="archive" /> Archive of past questions
-      </Link>
       <FeedbackSheet open={feedback} onClose={() => setFeedback(false)} />
+      <SuggestSheet open={suggest} onClose={() => setSuggest(false)} groupId={circle.id} isAdmin={circle.role === "admin"} />
     </div>
   );
 }

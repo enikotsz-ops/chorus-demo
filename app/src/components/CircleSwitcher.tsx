@@ -10,7 +10,14 @@ import { Sheet } from "./Sheet";
 export const LAST_CIRCLE = "chorus:last-circle";
 
 /** Tappable circle name in the top bar that opens a list of all my circles. */
-export function CircleSwitcher({ current }: { current: Group }) {
+export function CircleSwitcher({
+  current,
+  hrefFor = (id) => `/g/${id}`,
+}: {
+  current: Group;
+  /** Where picking a circle goes; defaults to that circle's screen */
+  hrefFor?: (id: string) => string;
+}) {
   const userId = useUserId();
   const navigate = useNavigate();
   const [open, setOpen] = useState(false);
@@ -49,7 +56,7 @@ export function CircleSwitcher({ current }: { current: Group }) {
               key={c.id}
               className="list-item"
               style={{ background: c.id === current.id ? "var(--sand)" : "var(--paper)" }}
-              onClick={() => go(`/g/${c.id}`)}
+              onClick={() => go(hrefFor(c.id))}
               aria-current={c.id === current.id}
             >
               <Avatar id={c.id} name={c.name} />

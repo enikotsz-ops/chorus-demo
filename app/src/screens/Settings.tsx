@@ -92,14 +92,8 @@ export function Settings() {
   };
 
   return (
-    <div className="screen">
-      <div className="topbar">
-        <button className="icon-btn" onClick={() => navigate(-1)} aria-label="Back">
-          <Icon name="back" />
-        </button>
-        <span className="topbar-title">Settings</span>
-        <span style={{ width: 52 }} />
-      </div>
+    <div className="screen with-tabs">
+      <h1 style={{ marginTop: 20 }}>You</h1>
 
       <div className="card">
         <div className="field">

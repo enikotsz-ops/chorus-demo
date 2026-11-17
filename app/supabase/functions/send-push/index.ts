@@ -26,7 +26,7 @@ function emailText(n: Note, appUrl: string) {
     "Open Chorus from your Home Screen to answer, or go to:",
     `${appUrl}${n.url}`,
     "",
-    "You're getting this because push reminders aren't switched on for you. Turn email reminders off in Chorus > Settings.",
+    "You're getting this because push reminders aren't switched on for you. Turn email reminders off in Chorus under You.",
   ].join("\n");
 }
 
@@ -37,7 +37,7 @@ function emailHtml(n: Note, name: string | null, appUrl: string) {
   <p style="font-size:22px;line-height:1.3;font-weight:600;background:#FBF3D7;border-radius:16px;padding:18px;margin:0 0 20px">${escape(n.body)}</p>
   <p style="font-size:15px;margin:0 0 20px">Open <b>Chorus from your Home Screen</b> to answer. On a computer, use the button below.</p>
   <p style="margin:0 0 28px"><a href="${appUrl}${n.url}" style="display:inline-block;background:#1B1A17;color:#fff;text-decoration:none;font-weight:600;padding:14px 22px;border-radius:14px">Open Chorus</a></p>
-  <p style="font-size:12px;color:#6E695C;margin:0">You're getting this because push reminders aren't switched on for you. You can turn email reminders off in Chorus &rarr; Settings.</p>
+  <p style="font-size:12px;color:#6E695C;margin:0">You're getting this because push reminders aren't switched on for you. You can turn email reminders off in Chorus under <b>You</b>.</p>
 </div>`;
 }
 

@@ -1,13 +1,18 @@
 import { useEffect, useState } from "react";
 import { Navigate, Route, Routes, useLocation, useNavigate } from "react-router-dom";
+import { TabBar } from "./components/TabBar";
 import { ToastProvider } from "./components/Toast";
 import { AuthProvider, useAuth } from "./lib/auth";
+import { CirclesProvider } from "./lib/circles";
+import { PlayerProvider } from "./lib/player";
 import { configured } from "./lib/supabase";
 import { Archive } from "./screens/Archive";
 import { GroupHome } from "./screens/GroupHome";
 import { GroupSettings } from "./screens/GroupSettings";
 import { Home } from "./screens/Home";
 import { Join, PENDING_INVITE } from "./screens/Join";
+import { Moments } from "./screens/Moments";
+import { Play } from "./screens/Play";
 import { NewGroup } from "./screens/NewGroup";
 import { Onboarding } from "./screens/Onboarding";
 import { RoundScreen } from "./screens/RoundScreen";
@@ -58,9 +63,16 @@ function Routed() {
     );
   }
 
+  // Main screens get the bottom bar; detail screens (a round, settings pages) don't.
+  const showTabs = /^\/($|moments|play|settings$|g\/[^/]+$)/.test(pathname);
+
   return (
-    <Routes>
+    <CirclesProvider>
+      <PlayerProvider>
+        <Routes>
       <Route path="/" element={<Home />} />
+      <Route path="/moments" element={<Moments />} />
+      <Route path="/play" element={<Play />} />
       <Route path="/new" element={<NewGroup />} />
       <Route path="/join/:code" element={<Join />} />
       <Route path="/g/:groupId" element={<GroupHome />} />
@@ -69,7 +81,10 @@ function Routed() {
       <Route path="/r/:roundId" element={<RoundScreen />} />
       <Route path="/settings" element={<Settings />} />
       <Route path="*" element={<Navigate to="/" replace />} />
-    </Routes>
+        </Routes>
+        {showTabs && <TabBar />}
+      </PlayerProvider>
+    </CirclesProvider>
   );
 }
 

@@ -1,13 +1,18 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { CircleTypePicker } from "../components/CircleTypePicker";
 import { Icon } from "../components/Icon";
 import { createGroup } from "../lib/api";
+import { useCircles } from "../lib/circles";
 import { browserTimezone, describeSchedule, formatHour } from "../lib/time";
+import type { CircleType } from "../lib/types";
 
 export function NewGroup() {
   const navigate = useNavigate();
   const [name, setName] = useState("");
   const [qpw, setQpw] = useState(1);
+  const [type, setType] = useState<CircleType>("family");
+  const { refresh } = useCircles();
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -15,7 +20,8 @@ export function NewGroup() {
     setBusy(true);
     setError(null);
     try {
-      const id = await createGroup(name.trim(), qpw, 18, browserTimezone());
+      const id = await createGroup(name.trim(), qpw, 18, browserTimezone(), type);
+      await refresh();
       navigate(`/g/${id}/settings?invite=1`, { replace: true });
     } catch (e) {
       setError((e as Error).message);
@@ -34,12 +40,21 @@ export function NewGroup() {
       </div>
 
       <div className="stack" style={{ gap: 20 }}>
+        <div className="stack" style={{ gap: 6 }}>
+          <h2>Who is this circle for?</h2>
+          <p className="small muted">
+            We'll pick questions that suit them, e.g. "What is one thing you learned from someone in this circle?" You
+            can change this later.
+          </p>
+        </div>
+        <CircleTypePicker value={type} onChange={setType} />
+
         <div className="field">
           <label htmlFor="gname">Circle name</label>
           <input
             id="gname"
             className="input"
-            placeholder="The Smiths, Uni friends…"
+            placeholder={type === "family" ? "The Smiths, Mum's side…" : "Uni friends, The book club…"}
             maxLength={60}
             value={name}
             onChange={(e) => setName(e.target.value)}

@@ -1,5 +1,5 @@
 import { supabase } from "./supabase";
-import type { Answer, Group, Member, Profile, Round } from "./types";
+import type { Answer, CircleType, Group, Member, Profile, Question, Round } from "./types";
 
 type RawAnswer = Omit<Answer, "reactions" | "comments"> & {
   answer_reactions: Answer["reactions"];
@@ -14,9 +14,9 @@ type RawRound = Omit<Round, "participants" | "question" | "answers"> & {
 
 const ROUND_SELECT =
   "id, group_id, opens_at, base_deadline, deadline, extensions_used, status, unlocked_at, " +
-  "questions(id, text, theme), round_participants(user_id), " +
+  "questions(id, text, theme, suggested_by, suggested_by_name), round_participants(user_id), " +
   "answers(id, user_id, speaker_name, storage_path, mime_type, duration_ms, created_at, " +
-  "answer_reactions(emoji, user_id), answer_comments(id, user_id, body, created_at))";
+  "answer_reactions(emoji, user_id, created_at), answer_comments(id, user_id, body, created_at))";
 
 function toRound(r: RawRound): Round {
   const { questions, round_participants, ...rest } = r;
@@ -75,13 +75,39 @@ export async function getRounds(groupId: string): Promise<Round[]> {
   return rows.map(toRound);
 }
 
+/** Every round in the given circles, newest first. */
+export async function getRoundsForGroups(groupIds: string[]): Promise<Round[]> {
+  if (!groupIds.length) return [];
+  const rows = check(
+    await supabase.from("rounds").select(ROUND_SELECT).in("group_id", groupIds).order("opens_at", { ascending: false }),
+  ) as unknown as RawRound[];
+  return rows.map(toRound);
+}
+
+/** Members of several circles at once, with their profiles. */
+export async function getMembersForGroups(groupIds: string[]): Promise<(Member & { group_id: string })[]> {
+  if (!groupIds.length) return [];
+  const members = check(
+    await supabase.from("group_members").select("group_id, user_id, role").in("group_id", groupIds).order("joined_at"),
+  ) as (Member & { group_id: string })[];
+  const ids = [...new Set(members.map((m) => m.user_id))];
+  const profiles = check(await supabase.from("profiles").select("*").in("id", ids)) as Profile[];
+  return members.map((m) => ({ ...m, profile: profiles.find((p) => p.id === m.user_id) }));
+}
+
 export async function getRound(id: string): Promise<Round> {
   const row = check(await supabase.from("rounds").select(ROUND_SELECT).eq("id", id).single());
   return toRound(row as unknown as RawRound);
 }
 
-export async function createGroup(name: string, qpw: number, hour: number, tz: string): Promise<string> {
-  return check(await supabase.rpc("create_group", { group_name: name, qpw, hour, tz })) as string;
+export async function createGroup(
+  name: string,
+  qpw: number,
+  hour: number,
+  tz: string,
+  ctype: CircleType,
+): Promise<string> {
+  return check(await supabase.rpc("create_group", { group_name: name, qpw, hour, tz, ctype })) as string;
 }
 
 export async function groupPreview(code: string) {
@@ -101,8 +127,15 @@ export async function removeMember(gid: string, uid: string) {
   check(await supabase.rpc("remove_member", { gid, uid }));
 }
 
-export async function updateGroupSettings(gid: string, name: string, qpw: number, hour: number, tz: string) {
-  check(await supabase.rpc("update_group_settings", { gid, group_name: name, qpw, hour, tz }));
+export async function updateGroupSettings(
+  gid: string,
+  name: string,
+  qpw: number,
+  hour: number,
+  tz: string,
+  ctype: CircleType,
+) {
+  check(await supabase.rpc("update_group_settings", { gid, group_name: name, qpw, hour, tz, ctype }));
 }
 
 export async function shuffleQuestion(rid: string) {
@@ -251,4 +284,39 @@ export async function setLaunchUpdates(userId: string, yes: boolean) {
       .update({ launch_updates: yes, launch_updates_at: new Date().toISOString() })
       .eq("id", userId),
   );
+}
+
+/** Suggested questions in a circle that haven't been asked yet, oldest first. */
+export async function getPendingSuggestions(gid: string): Promise<(Question & { created_at: string })[]> {
+  const asked = check(await supabase.from("rounds").select("question_id").eq("group_id", gid)) as { question_id: number }[];
+  const rows = check(
+    await supabase
+      .from("questions")
+      .select("id, text, theme, suggested_by, suggested_by_name, created_at")
+      .eq("group_id", gid)
+      .order("created_at"),
+  ) as (Question & { created_at: string })[];
+  const used = new Set(asked.map((a) => a.question_id));
+  return rows.filter((q) => !used.has(q.id));
+}
+
+export async function suggestQuestion(gid: string, question: string) {
+  check(await supabase.rpc("suggest_question", { gid, question }));
+}
+
+export async function deleteSuggestion(qid: number) {
+  check(await supabase.rpc("delete_suggestion", { qid }));
+}
+
+export async function getGameInterest(userId: string): Promise<string[]> {
+  const rows = check(await supabase.from("game_interest").select("game").eq("user_id", userId)) as { game: string }[];
+  return rows.map((r) => r.game);
+}
+
+export async function setGameInterest(userId: string, game: string, on: boolean) {
+  const table = supabase.from("game_interest");
+  const res = on
+    ? await table.insert({ user_id: userId, game })
+    : await table.delete().eq("user_id", userId).eq("game", game);
+  if (res.error && res.error.code !== "23505") throw new Error(res.error.message);
 }
