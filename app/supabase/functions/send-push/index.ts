@@ -7,9 +7,27 @@ import webpush from "npm:web-push@3.6.7";
 
 const json = (body: unknown, status = 200) => Response.json(body, { status });
 
+// Short fingerprint so mismatched secrets can be compared without revealing them.
+async function fingerprint(value: string) {
+  const hash = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(value));
+  return [...new Uint8Array(hash)].slice(0, 4).map((b) => b.toString(16).padStart(2, "0")).join("");
+}
+
 Deno.serve(async (req) => {
-  if (req.headers.get("x-cron-secret") !== Deno.env.get("CRON_SECRET")) {
-    return json({ error: "forbidden: x-cron-secret does not match CRON_SECRET" }, 403);
+  const expected = Deno.env.get("CRON_SECRET")?.trim();
+  const received = req.headers.get("x-cron-secret")?.trim() ?? "";
+  if (!expected) {
+    return json({ error: "missing secrets", missing: ["CRON_SECRET"] }, 500);
+  }
+  if (received !== expected) {
+    return json(
+      {
+        error: "forbidden: x-cron-secret does not match CRON_SECRET",
+        stored: { length: expected.length, fingerprint: await fingerprint(expected) },
+        sent: { length: received.length, fingerprint: await fingerprint(received) },
+      },
+      403,
+    );
   }
 
   const env = {
