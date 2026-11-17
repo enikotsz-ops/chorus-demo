@@ -124,6 +124,26 @@ export function Settings() {
       <div className="card">
         <label className="toggle-row">
           <span style={{ flex: 1 }}>
+            <span style={{ fontWeight: 600, display: "block" }}>Email reminders</span>
+            <span className="small muted">
+              If reminders aren't on for this phone, we'll email new questions, deadline reminders and unlocks instead.
+            </span>
+          </span>
+          <input
+            type="checkbox"
+            checked={profile?.email_reminders !== false}
+            onChange={async (e) => {
+              try {
+                await saveProfile(userId!, { email_reminders: e.target.checked });
+                await refreshProfile();
+              } catch (err) {
+                toast((err as Error).message);
+              }
+            }}
+          />
+        </label>
+        <label className="toggle-row">
+          <span style={{ flex: 1 }}>
             <span style={{ fontWeight: 600, display: "block" }}>Launch updates</span>
             <span className="small muted">Email me when the full Chorus app launches.</span>
           </span>

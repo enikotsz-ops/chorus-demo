@@ -30,6 +30,7 @@ The landing page at the repo root is separate and untouched.
 - Recordings are kept until the person deletes them. People can delete any of their answers; when deleting their account they choose to remove all recordings or leave them with their circles (credited by name).
 - After answering (or once a round closes), people can give the question a thumbs up or down.
 - Once a round unlocks, members can react to each voice answer with emojis and leave text comments in a thread under it. Comments notify the speaker and earlier commenters.
+- Email reminders: people with no push-enabled device get the important ones (new question, deadline reminder, last chance, unlocked) by email through Resend, unless they switch it off in Settings. Needs the `RESEND_API_KEY` function secret; optional `EMAIL_FROM` and `APP_URL`.
 - Push reminders: new question, evening reminder (up to 3 a week: at the release hour in each person's own time zone, during the last two days; 4 or more a week: about 4 hours before the deadline), each extension, unlock, and permanent lock.
 
 ## Setup

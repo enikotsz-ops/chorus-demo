@@ -4,6 +4,8 @@ export type Profile = {
   timezone: string;
   /** null until asked */
   launch_updates: boolean | null;
+  /** Email for important reminders when push isn't set up. */
+  email_reminders?: boolean;
 };
 
 export type Group = {

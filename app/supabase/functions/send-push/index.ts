@@ -11,6 +11,36 @@ const json = (body: unknown, status = 200) => Response.json(body, { status });
 // and is marked done without being sent, e.g. after downtime.
 const STALE_AFTER_MS = 60 * 60 * 1000;
 
+type Recipient = { id: string; email: string | null; display_name: string | null; email_reminders: boolean };
+type Note = { title: string; body: string; url: string };
+
+const escape = (s: string) =>
+  s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
+
+function emailText(n: Note, appUrl: string) {
+  return [
+    `${n.title}`,
+    "",
+    n.body,
+    "",
+    "Open Chorus from your Home Screen to answer, or go to:",
+    `${appUrl}${n.url}`,
+    "",
+    "You're getting this because push reminders aren't switched on for you. Turn email reminders off in Chorus > Settings.",
+  ].join("\n");
+}
+
+function emailHtml(n: Note, name: string | null, appUrl: string) {
+  return `<div style="font-family:-apple-system,Helvetica,Arial,sans-serif;max-width:440px;margin:0 auto;padding:24px;color:#1B1A17">
+  <p style="font-size:13px;letter-spacing:.12em;text-transform:uppercase;color:#8A8263;margin:0 0 12px">${escape(n.title)}</p>
+  <p style="font-size:15px;margin:0 0 8px">Hi${name ? " " + escape(name) : ""},</p>
+  <p style="font-size:22px;line-height:1.3;font-weight:600;background:#FBF3D7;border-radius:16px;padding:18px;margin:0 0 20px">${escape(n.body)}</p>
+  <p style="font-size:15px;margin:0 0 20px">Open <b>Chorus from your Home Screen</b> to answer. On a computer, use the button below.</p>
+  <p style="margin:0 0 28px"><a href="${appUrl}${n.url}" style="display:inline-block;background:#1B1A17;color:#fff;text-decoration:none;font-weight:600;padding:14px 22px;border-radius:14px">Open Chorus</a></p>
+  <p style="font-size:12px;color:#6E695C;margin:0">You're getting this because push reminders aren't switched on for you. You can turn email reminders off in Chorus &rarr; Settings.</p>
+</div>`;
+}
+
 // Short fingerprint so mismatched secrets can be compared without revealing them.
 async function fingerprint(value: string) {
   const hash = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(value));
@@ -41,6 +71,10 @@ Deno.serve(async (req) => {
     vapidPublic: Deno.env.get("VAPID_PUBLIC_KEY")?.trim(),
     vapidPrivate: Deno.env.get("VAPID_PRIVATE_KEY")?.trim(),
     vapidSubject: Deno.env.get("VAPID_SUBJECT")?.trim() || "mailto:hello@getchorus.org",
+    // Optional: without it, email reminders are simply skipped.
+    resendKey: Deno.env.get("RESEND_API_KEY")?.trim(),
+    emailFrom: Deno.env.get("EMAIL_FROM")?.trim() || "Chorus <hello@getchorus.org>",
+    appUrl: (Deno.env.get("APP_URL")?.trim() || "https://chorus-demo.vercel.app").replace(/\/$/, ""),
   };
   const missing = [
     !env.url && "SUPABASE_URL",
@@ -61,7 +95,7 @@ Deno.serve(async (req) => {
 
     const { data: pending, error } = await supabase
       .from("notifications")
-      .select("id, user_id, title, body, url, created_at")
+      .select("id, user_id, title, body, url, created_at, email")
       .is("sent_at", null)
       .order("created_at")
       .limit(200);
@@ -108,6 +142,36 @@ Deno.serve(async (req) => {
       }
     }
 
+    // Email the important ones to people with no working push device.
+    let emailed = 0;
+    const emailFailures: string[] = [];
+    const withPush = new Set((subs ?? []).filter((s) => !gone.includes(s.endpoint)).map((s) => s.user_id));
+    const toEmail = fresh.filter((n) => n.email && !withPush.has(n.user_id));
+    if (toEmail.length && env.resendKey) {
+      const { data: people, error: peopleError } = await supabase.rpc("notification_recipients", {
+        user_ids: [...new Set(toEmail.map((n) => n.user_id))],
+      });
+      if (peopleError) emailFailures.push(`recipients: ${peopleError.message}`);
+      const byId = new Map(((people ?? []) as Recipient[]).map((p) => [p.id, p]));
+      for (const n of toEmail) {
+        const person = byId.get(n.user_id);
+        if (!person?.email || !person.email_reminders) continue;
+        const res = await fetch("https://api.resend.com/emails", {
+          method: "POST",
+          headers: { Authorization: `Bearer ${env.resendKey}`, "Content-Type": "application/json" },
+          body: JSON.stringify({
+            from: env.emailFrom,
+            to: person.email,
+            subject: `${n.title}: ${n.body}`.slice(0, 140),
+            html: emailHtml(n, person.display_name, env.appUrl),
+            text: emailText(n, env.appUrl),
+          }),
+        });
+        if (res.ok) emailed++;
+        else emailFailures.push(`${res.status}: ${(await res.text()).slice(0, 150)}`);
+      }
+    }
+
     await supabase
       .from("notifications")
       .update({ sent_at: new Date().toISOString() })
@@ -122,6 +186,9 @@ Deno.serve(async (req) => {
       sent,
       removed: gone.length,
       failures: failures.slice(0, 5),
+      emailed,
+      email_skipped_no_key: toEmail.length && !env.resendKey ? toEmail.length : 0,
+      email_failures: emailFailures.slice(0, 5),
     });
   } catch (e) {
     return json({ error: "unexpected failure", detail: (e as Error).message }, 500);
