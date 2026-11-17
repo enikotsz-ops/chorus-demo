@@ -2,6 +2,7 @@ import { useState } from "react";
 import { useUserId } from "../lib/auth";
 import { enablePush, isIOS, pushState, type PushState } from "../lib/push";
 import { Icon } from "./Icon";
+import { InstallGuide } from "./InstallGuide";
 
 /** Explains and requests push permission, including the iPhone Home Screen step. */
 export function NotificationsCard() {
@@ -31,23 +32,8 @@ export function NotificationsCard() {
     );
   }
 
-  if (state === "needs-install") {
-    return (
-      <div className="panel stack">
-        <h3>Add Chorus to your Home Screen</h3>
-        <p className="muted small">On iPhone, reminders only work once Chorus is on your Home Screen.</p>
-        <ol className="small" style={{ margin: 0, paddingLeft: 20, display: "grid", gap: 6 }}>
-          <li>
-            Tap the <b>Share</b> button in Safari <Icon name="share" size={16} />
-          </li>
-          <li>
-            Choose <b>Add to Home Screen</b>
-          </li>
-          <li>Open Chorus from your Home Screen and turn on reminders</li>
-        </ol>
-      </div>
-    );
-  }
+  // iPhone: reminders need the Home Screen app first.
+  if (state === "needs-install") return <InstallGuide />;
 
   if (state === "denied") {
     return (

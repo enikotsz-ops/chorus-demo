@@ -1117,3 +1117,15 @@ textarea.input {
   background: var(--sand);
   filter: none;
 }
+
+.steps-list {
+  margin: 0;
+  padding-left: 22px;
+  display: grid;
+  gap: 8px;
+  font-size: 15px;
+}
+
+.steps-list svg {
+  vertical-align: -2px;
+}

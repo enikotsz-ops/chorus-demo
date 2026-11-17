@@ -2,11 +2,13 @@ import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { FeedbackSheet } from "../components/FeedbackSheet";
 import { Icon } from "../components/Icon";
+import { InstallGuide } from "../components/InstallGuide";
 import { NotificationsCard } from "../components/NotificationsCard";
 import { Sheet } from "../components/Sheet";
 import { useToast } from "../components/Toast";
 import { deleteAccount, saveProfile, setLaunchUpdates } from "../lib/api";
 import { useAuth } from "../lib/auth";
+import { needsInstallForPush } from "../lib/push";
 import { supabase } from "../lib/supabase";
 
 function DeleteAccountSheet({ open, onClose }: { open: boolean; onClose: () => void }) {
@@ -115,6 +117,8 @@ export function Settings() {
         <p className="small muted">Signed in as {session?.user.email}</p>
       </div>
 
+      {/* iPhone shows the guide inside the reminders card instead, so it isn't shown twice. */}
+      {!needsInstallForPush() && <InstallGuide />}
       <NotificationsCard />
 
       <div className="card">
