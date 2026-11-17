@@ -1,66 +1,95 @@
 // Drains the notifications outbox and delivers each one as a Web Push message.
 // Called every minute by pg_cron (see supabase/setup/cron.sql).
+// Setup problems are reported in the response instead of crashing the worker,
+// so they show up in net._http_response.
 import { createClient } from "npm:@supabase/supabase-js@2";
 import webpush from "npm:web-push@3.6.7";
 
-const supabase = createClient(
-  Deno.env.get("SUPABASE_URL")!,
-  Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!,
-);
-
-webpush.setVapidDetails(
-  Deno.env.get("VAPID_SUBJECT") ?? "mailto:hello@getchorus.org",
-  Deno.env.get("VAPID_PUBLIC_KEY")!,
-  Deno.env.get("VAPID_PRIVATE_KEY")!,
-);
+const json = (body: unknown, status = 200) => Response.json(body, { status });
 
 Deno.serve(async (req) => {
   if (req.headers.get("x-cron-secret") !== Deno.env.get("CRON_SECRET")) {
-    return new Response("forbidden", { status: 403 });
+    return json({ error: "forbidden: x-cron-secret does not match CRON_SECRET" }, 403);
   }
 
-  const { data: pending, error } = await supabase
-    .from("notifications")
-    .select("id, user_id, title, body, url")
-    .is("sent_at", null)
-    .order("created_at")
-    .limit(200);
-  if (error) return new Response(error.message, { status: 500 });
-  if (!pending?.length) return Response.json({ sent: 0 });
+  const env = {
+    url: Deno.env.get("SUPABASE_URL"),
+    // Newer projects may only expose the secret key under a different name.
+    serviceKey: Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? Deno.env.get("SUPABASE_SECRET_KEY"),
+    vapidPublic: Deno.env.get("VAPID_PUBLIC_KEY")?.trim(),
+    vapidPrivate: Deno.env.get("VAPID_PRIVATE_KEY")?.trim(),
+    vapidSubject: Deno.env.get("VAPID_SUBJECT")?.trim() || "mailto:hello@getchorus.org",
+  };
+  const missing = [
+    !env.url && "SUPABASE_URL",
+    !env.serviceKey && "SUPABASE_SERVICE_ROLE_KEY",
+    !env.vapidPublic && "VAPID_PUBLIC_KEY",
+    !env.vapidPrivate && "VAPID_PRIVATE_KEY",
+  ].filter(Boolean);
+  if (missing.length) return json({ error: "missing secrets", missing }, 500);
 
-  const userIds = [...new Set(pending.map((n) => n.user_id))];
-  const { data: subs } = await supabase
-    .from("push_subscriptions")
-    .select("endpoint, user_id, p256dh, auth")
-    .in("user_id", userIds);
+  try {
+    webpush.setVapidDetails(env.vapidSubject, env.vapidPublic!, env.vapidPrivate!);
+  } catch (e) {
+    return json({ error: "invalid VAPID keys or subject", detail: (e as Error).message }, 500);
+  }
 
-  let sent = 0;
-  const gone: string[] = [];
-  for (const n of pending) {
-    const payload = JSON.stringify({ title: n.title, body: n.body, url: n.url });
-    for (const s of (subs ?? []).filter((s) => s.user_id === n.user_id)) {
-      try {
-        await webpush.sendNotification(
-          { endpoint: s.endpoint, keys: { p256dh: s.p256dh, auth: s.auth } },
-          payload,
-          { TTL: 60 * 60 * 24 },
-        );
-        sent++;
-      } catch (e) {
-        // 404/410 mean the browser dropped the subscription.
-        const status = (e as { statusCode?: number }).statusCode;
-        if (status === 404 || status === 410) gone.push(s.endpoint);
-        else console.error("push failed", status, (e as Error).message);
+  try {
+    const supabase = createClient(env.url!, env.serviceKey!);
+
+    const { data: pending, error } = await supabase
+      .from("notifications")
+      .select("id, user_id, title, body, url")
+      .is("sent_at", null)
+      .order("created_at")
+      .limit(200);
+    if (error) return json({ error: "reading notifications failed", detail: error.message }, 500);
+    if (!pending?.length) return json({ sent: 0 });
+
+    const userIds = [...new Set(pending.map((n) => n.user_id))];
+    const { data: subs, error: subsError } = await supabase
+      .from("push_subscriptions")
+      .select("endpoint, user_id, p256dh, auth")
+      .in("user_id", userIds);
+    if (subsError) return json({ error: "reading subscriptions failed", detail: subsError.message }, 500);
+
+    let sent = 0;
+    const failures: string[] = [];
+    const gone: string[] = [];
+    for (const n of pending) {
+      const payload = JSON.stringify({ title: n.title, body: n.body, url: n.url });
+      for (const s of (subs ?? []).filter((s) => s.user_id === n.user_id)) {
+        try {
+          await webpush.sendNotification(
+            { endpoint: s.endpoint, keys: { p256dh: s.p256dh, auth: s.auth } },
+            payload,
+            { TTL: 60 * 60 * 24 },
+          );
+          sent++;
+        } catch (e) {
+          // 404/410 mean the browser dropped the subscription.
+          const status = (e as { statusCode?: number }).statusCode;
+          if (status === 404 || status === 410) gone.push(s.endpoint);
+          else failures.push(`${status ?? "?"}: ${(e as Error).message}`.slice(0, 200));
+        }
       }
     }
-  }
 
-  await supabase
-    .from("notifications")
-    .update({ sent_at: new Date().toISOString() })
-    .in("id", pending.map((n) => n.id));
-  if (gone.length) {
-    await supabase.from("push_subscriptions").delete().in("endpoint", gone);
+    await supabase
+      .from("notifications")
+      .update({ sent_at: new Date().toISOString() })
+      .in("id", pending.map((n) => n.id));
+    if (gone.length) {
+      await supabase.from("push_subscriptions").delete().in("endpoint", gone);
+    }
+    return json({
+      notifications: pending.length,
+      subscriptions: subs?.length ?? 0,
+      sent,
+      removed: gone.length,
+      failures: failures.slice(0, 5),
+    });
+  } catch (e) {
+    return json({ error: "unexpected failure", detail: (e as Error).message }, 500);
   }
-  return Response.json({ sent, removed: gone.length });
 });
