@@ -6,6 +6,7 @@ import { InstallGuide } from "../components/InstallGuide";
 import { InviteCard } from "../components/InviteCard";
 import { NameRow } from "../components/NameRow";
 import { YouDashboard } from "../components/YouDashboard";
+import { Milestones, YourImpact } from "../components/YouAchievements";
 import { MostLovedStory, WaitingOnYou } from "../components/YouHighlights";
 import { NotificationsCard } from "../components/NotificationsCard";
 import { Sheet } from "../components/Sheet";
@@ -91,7 +92,9 @@ export function Settings() {
       <WaitingOnYou />
       <YouDashboard />
       <MostLovedStory />
+      <Milestones />
       <InviteCard />
+      <YourImpact />
 
 
       {/* iPhone shows the guide inside the reminders card instead, so it isn't shown twice. */}

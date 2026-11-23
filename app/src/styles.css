@@ -1839,3 +1839,83 @@ textarea.input {
   font-weight: 600;
   white-space: nowrap;
 }
+
+.badges {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 8px;
+}
+
+.badge-tile {
+  background: var(--paper);
+  border-radius: 16px;
+  padding: 10px 4px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 3px;
+  text-align: center;
+  min-width: 0;
+}
+
+.badge-emoji {
+  font-size: 26px;
+  filter: grayscale(1);
+  opacity: 0.35;
+}
+
+.badge-tile b {
+  font-size: 11px;
+  line-height: 1.2;
+  color: var(--muted);
+}
+
+.badge-tile span:last-child {
+  font-size: 10px;
+  color: var(--muted-2);
+  line-height: 1.2;
+}
+
+.badge-tile.earned {
+  background: #fdf3d4;
+}
+
+.badge-tile.earned .badge-emoji {
+  filter: none;
+  opacity: 1;
+}
+
+.badge-tile.earned b {
+  color: var(--ink);
+}
+
+.impact-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.impact-list > div {
+  display: flex;
+  gap: 12px;
+  align-items: flex-start;
+}
+
+.impact-list .grow {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.impact-icon {
+  width: 40px;
+  height: 40px;
+  border-radius: 12px;
+  background: var(--paper);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 20px;
+  flex: none;
+}

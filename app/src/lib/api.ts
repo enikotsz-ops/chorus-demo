@@ -320,3 +320,15 @@ export async function setGameInterest(userId: string, game: string, on: boolean)
     : await table.delete().eq("user_id", userId).eq("game", game);
   if (res.error && res.error.code !== "23505") throw new Error(res.error.message);
 }
+
+/** How many questions I've suggested across my circles. */
+export async function getMySuggestionCount(userId: string): Promise<number> {
+  const res = await supabase.from("questions").select("id", { count: "exact", head: true }).eq("suggested_by", userId);
+  if (res.error) throw new Error(res.error.message);
+  return res.count ?? 0;
+}
+
+/** How many people signed up through my invite link. */
+export async function getMyInviteCount(): Promise<number> {
+  return check(await supabase.rpc("my_invite_count")) as number;
+}
