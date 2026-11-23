@@ -20,17 +20,11 @@ export function InviteCard() {
 
   return (
     <div className="card quiet">
-      <div className="row" style={{ alignItems: "flex-start" }}>
-        <span className="empty-icon" style={{ width: 44, height: 44, borderRadius: 14, flex: "none" }}>
-          <Icon name="share" size={22} />
+      <div className="row">
+        <span className="empty-icon" style={{ width: 40, height: 40, borderRadius: 12, flex: "none" }}>
+          <Icon name="share" size={20} />
         </span>
-        <div style={{ flex: 1, minWidth: 0 }}>
-          <h3>Invite someone to Chorus</h3>
-          <p className="small muted">
-            They can sign up and start their own circle. To add people to one of your circles, use that circle's invite
-            link instead.
-          </p>
-        </div>
+        <h3 style={{ flex: 1 }}>Invite someone to Chorus</h3>
       </div>
       <div className="panel small" style={{ wordBreak: "break-all" }}>
         {window.location.host}

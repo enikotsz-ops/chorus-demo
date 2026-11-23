@@ -4,6 +4,8 @@ import { FeedbackSheet } from "../components/FeedbackSheet";
 import { Icon } from "../components/Icon";
 import { InstallGuide } from "../components/InstallGuide";
 import { InviteCard } from "../components/InviteCard";
+import { NameRow } from "../components/NameRow";
+import { YouDashboard } from "../components/YouDashboard";
 import { NotificationsCard } from "../components/NotificationsCard";
 import { Sheet } from "../components/Sheet";
 import { useToast } from "../components/Toast";
@@ -75,43 +77,19 @@ function DeleteAccountSheet({ open, onClose }: { open: boolean; onClose: () => v
 }
 
 export function Settings() {
-  const { userId, profile, session, refreshProfile } = useAuth();
+  const { userId, profile, refreshProfile } = useAuth();
   const navigate = useNavigate();
   const toast = useToast();
-  const [name, setName] = useState(profile?.display_name ?? "");
   const [feedback, setFeedback] = useState(false);
   const [deleting, setDeleting] = useState(false);
 
-  const saveName = async () => {
-    try {
-      await saveProfile(userId!, { display_name: name.trim() });
-      await refreshProfile();
-      toast("Name updated");
-    } catch (e) {
-      toast((e as Error).message);
-    }
-  };
 
   return (
     <div className="screen with-tabs">
       <h1 style={{ marginTop: 20 }}>You</h1>
+      <YouDashboard />
       <InviteCard />
 
-      <div className="card">
-        <div className="field">
-          <label htmlFor="name">Your name</label>
-          <input id="name" className="input" value={name} maxLength={40} onChange={(e) => setName(e.target.value)} />
-        </div>
-        <button
-          className="btn secondary block"
-          style={{ background: "var(--paper)" }}
-          disabled={!name.trim() || name === profile?.display_name}
-          onClick={saveName}
-        >
-          Save name
-        </button>
-        <p className="small muted">Signed in as {session?.user.email}</p>
-      </div>
 
       {/* iPhone shows the guide inside the reminders card instead, so it isn't shown twice. */}
       {!needsInstallForPush() && <InstallGuide />}
@@ -171,6 +149,8 @@ export function Settings() {
         <span className="grow">Send feedback</span>
         <Icon name="chevron" />
       </button>
+
+      <NameRow />
 
       <div className="spacer" />
       <button
