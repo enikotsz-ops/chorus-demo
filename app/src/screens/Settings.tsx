@@ -6,6 +6,7 @@ import { InstallGuide } from "../components/InstallGuide";
 import { InviteCard } from "../components/InviteCard";
 import { NameRow } from "../components/NameRow";
 import { YouDashboard } from "../components/YouDashboard";
+import { MostLovedStory, WaitingOnYou } from "../components/YouHighlights";
 import { NotificationsCard } from "../components/NotificationsCard";
 import { Sheet } from "../components/Sheet";
 import { useToast } from "../components/Toast";
@@ -87,7 +88,9 @@ export function Settings() {
   return (
     <div className="screen with-tabs">
       <h1 style={{ marginTop: 20 }}>You</h1>
+      <WaitingOnYou />
       <YouDashboard />
+      <MostLovedStory />
       <InviteCard />
 
 

@@ -1812,3 +1812,30 @@ textarea.input {
 .btn.secondary.small-btn {
   background: var(--paper);
 }
+
+.waiting-card {
+  background: var(--yellow);
+}
+
+.waiting-card .muted {
+  color: var(--ink-2);
+}
+
+.streak.on {
+  background: #fdecd0;
+}
+
+.loved {
+  cursor: pointer;
+}
+
+.loved .row .grow {
+  flex: 1;
+  min-width: 0;
+}
+
+.loved-count {
+  font-size: 15px;
+  font-weight: 600;
+  white-space: nowrap;
+}

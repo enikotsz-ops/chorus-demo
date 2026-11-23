@@ -1,5 +1,6 @@
 import { useAuth } from "../lib/auth";
 import { useCircles } from "../lib/circles";
+import { answerStreak } from "../lib/stats";
 import { Avatar } from "./Avatar";
 
 const minutesText = (ms: number) => {
@@ -19,6 +20,7 @@ export function YouDashboard() {
   ).length;
   const ms = mine.reduce((t, a) => t + a.duration_ms, 0);
   const first = mine.map((a) => a.created_at).sort()[0];
+  const streak = answerStreak(rounds, userId ?? "");
 
   return (
     <div className="card dash">
@@ -50,6 +52,21 @@ export function YouDashboard() {
           <b>{minutesText(ms)}</b>
           <span>{ms >= 3600000 ? "recorded" : "minutes"}</span>
         </div>
+      </div>
+      <div className={`stat-wide streak ${streak ? "on" : ""}`}>
+        <span className="game-icon small-icon" aria-hidden="true">
+          🔥
+        </span>
+        <span className="grow">
+          <b>{streak ? `${streak} in a row` : "No streak yet"}</b>
+          <span className="small muted" style={{ display: "block" }}>
+            {streak >= 2
+              ? "Questions answered back to back. Keep it going!"
+              : streak === 1
+                ? "Answer the next question to grow your streak."
+                : "Answer your next question to start a streak."}
+          </span>
+        </span>
       </div>
       <div className="stat-wide">
         <span className="game-icon small-icon" aria-hidden="true">
