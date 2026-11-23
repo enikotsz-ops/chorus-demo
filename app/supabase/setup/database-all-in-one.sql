@@ -1364,3 +1364,7 @@ alter table public.notifications add column email_status text;
 alter table public.notifications add column email_error text;
 alter table public.notifications add column emailed_at timestamptz;
 
+-- Who invited whom through the general "Invite to Chorus" link.
+alter table public.profiles add column referred_by uuid references auth.users (id) on delete set null;
+alter table public.profiles add column referred_at timestamptz;
+

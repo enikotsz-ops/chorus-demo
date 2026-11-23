@@ -6,6 +6,9 @@ export type Profile = {
   launch_updates: boolean | null;
   /** Email for important reminders when push isn't set up. */
   email_reminders?: boolean;
+  /** Who invited them through the general invite link */
+  referred_by?: string | null;
+  referred_at?: string | null;
 };
 
 export type Group = {

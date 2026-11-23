@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { FeedbackSheet } from "../components/FeedbackSheet";
 import { Icon } from "../components/Icon";
 import { InstallGuide } from "../components/InstallGuide";
+import { InviteCard } from "../components/InviteCard";
 import { NotificationsCard } from "../components/NotificationsCard";
 import { Sheet } from "../components/Sheet";
 import { useToast } from "../components/Toast";
@@ -94,6 +95,7 @@ export function Settings() {
   return (
     <div className="screen with-tabs">
       <h1 style={{ marginTop: 20 }}>You</h1>
+      <InviteCard />
 
       <div className="card">
         <div className="field">

@@ -113,6 +113,11 @@ select n.created_at, p.display_name, left(n.body, 50) as message, n.email_status
 from notifications n join profiles p on p.id = n.user_id
 where n.email order by n.created_at desc limit 50;
 
+-- Who invited the most people through the general invite link
+select inviter.display_name as inviter, count(*) as signed_up
+from profiles p join profiles inviter on inviter.id = p.referred_by
+group by inviter.display_name order by signed_up desc;
+
 -- Which games people would play
 select game, count(*) from game_interest group by game order by count(*) desc;
 

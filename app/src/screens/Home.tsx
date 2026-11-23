@@ -1,6 +1,7 @@
 import { Link, useNavigate } from "react-router-dom";
 import { Avatar } from "../components/Avatar";
 import { Icon } from "../components/Icon";
+import { InviteCard } from "../components/InviteCard";
 import { buildActivity } from "../lib/activity";
 import { useUserId } from "../lib/auth";
 import { useCircles } from "../lib/circles";
@@ -99,6 +100,7 @@ export function Home() {
       <p className="small muted" style={{ textAlign: "center" }}>
         Joining someone else's circle? Open the invite link they sent you.
       </p>
+      <InviteCard />
     </div>
   );
 }

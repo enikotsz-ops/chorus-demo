@@ -2,6 +2,7 @@ import type { Session } from "@supabase/supabase-js";
 import { createContext, useCallback, useContext, useEffect, useState, type ReactNode } from "react";
 import { getProfile, saveProfile } from "./api";
 import { supabase } from "./supabase";
+import { saveReferral } from "./invite";
 import { browserTimezone } from "./time";
 import type { Profile } from "./types";
 
@@ -40,6 +41,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       p.timezone = tz;
     }
     setProfile(p);
+    if (p) saveReferral(p);
   }, [userId]);
 
   useEffect(() => {
